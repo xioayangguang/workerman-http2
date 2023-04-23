@@ -77,12 +77,12 @@ abstract class Frame
         $this->flags = new Flags(... $this->defined_flags);
         foreach ($options['flags'] ?? [] as $flag) {
             $this->flags->add($flag);
-        }
+        } 
         if ($this->stream_association === self::HAS_STREAM && !$this->stream_id) {
-            throw new InvalidFrameException();
+            throw new InvalidFrameException("Invalid Frame Flag", Http2Parser::PROTOCOL_ERROR);
         }
         if ($this->stream_association === self::NO_STREAM && $this->stream_id) {
-            throw new InvalidFrameException();
+            throw new InvalidFrameException("Invalid Frame Flag", Http2Parser::PROTOCOL_ERROR);
         }
     }
 
