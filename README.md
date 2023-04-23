@@ -1,4 +1,4 @@
-# workerman 实现http2
+# 基于workerman 实现http2
 
 * 协议实现目前不完善 目前握手方式只实现ssl协商上层协议
 
