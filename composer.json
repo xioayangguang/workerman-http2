@@ -1,0 +1,31 @@
+{
+  "name": "xiaoyangguang/workerman-http2",
+  "type": "library",
+  "keywords": [
+    "http2",
+    "php-http2",
+    "workerman-http2"
+  ],
+  "license": "MIT",
+  "description": "workerman http2",
+  "authors": [
+    {
+      "name": "xiaoyangguang",
+      "email": "930029203@qq.net",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "email": "930029203@qq.net"
+  },
+  "require": {
+    "php": ">=7.2",
+    "workerman/workerman": "^4.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "parse\\": "Parse"
+    }
+  }
+}
+
