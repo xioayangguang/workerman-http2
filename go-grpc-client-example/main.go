@@ -31,7 +31,7 @@ func main() {
 	}
 
 	// 创建连接
-	conn, err := grpc.Dial(":443", grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(":444", grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatal("服务端连接失败: ", err)
 	}
