@@ -533,7 +533,6 @@ final class Http2Driver
         try {
             /** @var Request $request */
             $request = $this->streamIdMap[$streamId];
-
             if (!in_array($request->getMethod(), Options::getAllowedMethods())) {
                 $response = new Response(405); //METHOD_NOT_ALLOWED
             } else {

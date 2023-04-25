@@ -25,9 +25,8 @@ class Response
 
     /**
      * @var array
-     * @var string
      */
-    protected $_trailers;
+    protected $_trailers = [];
 
     /**
      * Phrases.
@@ -148,7 +147,7 @@ class Response
 
     public function getBody(): string
     {
-        return $this->_body;//  '{"code":0,"data":{"url":"baidu.com"},"msg":"Success"}';
+        return $this->_body;
     }
 
     public function setStatus($status)
@@ -159,15 +158,15 @@ class Response
     public function getPushes(): array
     {
         return [];
-//        return [
-//            [
-//                "uri" => "",
-//                "header" => [],
-//            ], [
-//                "uri" => "",
-//                "header" => [],
-//            ]
-//        ];
+        //return [
+        //    [
+        //        "uri" => "",
+        //        "header" => [],
+        //    ], [
+        //        "uri" => "",
+        //        "header" => [],
+        //    ]
+        //];
     }
 
     public function getTrailers(): array

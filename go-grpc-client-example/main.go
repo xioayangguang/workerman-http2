@@ -19,7 +19,6 @@ const (
 )
 
 var (
-	addr = flag.String("addr", "127.0.0.1:443", "the address to connect to")
 	name = flag.String("name", defaultName, "Name to greet")
 )
 
