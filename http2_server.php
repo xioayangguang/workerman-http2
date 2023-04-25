@@ -14,11 +14,11 @@ new Http2('ssl://0.0.0.0:443', ['ssl' => [
 ]], function (Request $request) {
     return new \parse\Response(200,
         [
-            'content-type' => ['application/json; charset=utf-8'],
+            'content-type' => ['text/html'],
             'a' => ['hello world'],
             'b' => ['b']
         ],
-        $request->getMethod() . ":hello h2!"
+        "<h1>hello h2!<h1>"
     );
 });
 Http2::runAll();
