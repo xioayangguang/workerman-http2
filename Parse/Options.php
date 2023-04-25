@@ -7,7 +7,7 @@ final class Options
 {
     public static function isInDebugMode(): bool
     {
-        return false;
+        return true;
     }
 
     public static function getHttp2Timeout(): int

@@ -149,4 +149,28 @@ class Response
     {
         $this->_status = $status;
     }
+
+    public function getPushes(): array
+    {
+        return [];
+//        return [
+//            [
+//                "uri" => "",
+//                "header" => [],
+//            ], [
+//                "uri" => "",
+//                "header" => [],
+//            ]
+//        ];
+    }
+
+    public function getTrailers(): array
+    {
+//        return [];
+        return [
+            "test" => "value",
+            "test1" => "value",
+            "test2" => "value"
+        ];
+    }
 }
