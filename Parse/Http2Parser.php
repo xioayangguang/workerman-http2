@@ -223,7 +223,7 @@ final class Http2Parser
             var_dump($exception->getMessage());
             $this->handler->handleConnectionException($exception);
         } catch (\Exception $exception) {
-            var_dump($exception->getMessage());
+            var_dump((string)$exception);
             $this->handler->handleConnectionException(new Http2ConnectionException("PROTOCOL_ERROR", self::PROTOCOL_ERROR));
         }
     }
@@ -466,7 +466,7 @@ final class Http2Parser
 
     public static function LogFrame(string $action, int $frameType, int $frameFlags, int $streamId, int $frameLength, string $action1 = "")
     {
-        self::DebugLog($action . ' ' . Frame::FRAMES[$frameType] . ' flags = ' . \bin2hex(\chr($frameFlags)) . ', stream = ' . $streamId . ', length = ' . $frameLength . "   " . $action1 . "\r\n");
+        self::DebugLog($action . ' ' . Frame::FRAMES[$frameType] . ' flags = ' . \bin2hex(\chr($frameFlags)) . ', stream = ' . $streamId . ', length = ' . $frameLength . "   " . $action1);
     }
 
     public static function DebugLog(string $msg)

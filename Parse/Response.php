@@ -24,6 +24,12 @@ class Response
     protected $_body = null;
 
     /**
+     * @var array
+     * @var string
+     */
+    protected $_trailers;
+
+    /**
      * Phrases.
      * @var array
      */
@@ -166,11 +172,16 @@ class Response
 
     public function getTrailers(): array
     {
-//        return [];
-        return [
-            "test" => "value",
-            "test1" => "value",
-            "test2" => "value"
-        ];
+        return $this->_trailers;
+        //return [
+        //    "test" => "value",
+        //    "test1" => "value",
+        //    "test2" => "value"
+        //];
+    }
+
+    public function setTrailers(array $trailers)
+    {
+        $this->_trailers = $trailers;
     }
 }

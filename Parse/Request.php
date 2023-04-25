@@ -97,6 +97,7 @@ class Request
      */
     public function rawBody(): string
     {
+        return $this->_body;
     }
 
     /**
@@ -113,7 +114,7 @@ class Request
      */
     public function getHeaders(): array
     {
-        return [];
+        return $this->_header;
     }
 
     /**

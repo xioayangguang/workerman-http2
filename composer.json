@@ -20,7 +20,8 @@
   },
   "require": {
     "php": ">=7.2",
-    "workerman/workerman": "^4.1"
+    "workerman/workerman": "^4.1",
+    "google/protobuf": "^3.22"
   },
   "autoload": {
     "psr-4": {
@@ -28,4 +29,3 @@
     }
   }
 }
-
