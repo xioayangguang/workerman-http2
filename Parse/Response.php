@@ -155,6 +155,7 @@ class Response
         $this->_status = $status;
     }
 
+
     public function getPushes(): array
     {
         return [];

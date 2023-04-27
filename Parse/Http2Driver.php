@@ -80,15 +80,30 @@ final class Http2Driver
     private $hpack;
 
     /** @var callable */
-    private $business;
+    private $onRequest;
 
-    public function __construct(Http2Connect $http2Connect, callable $business, HPack $hpack)
+    /** @var callable */
+    private $onStreamData;
+    /**
+     * @var callable
+     */
+    private $onWriteBody;
+
+    /**
+     * @var array
+     */
+    private $clientStreamUrl;
+
+    public function __construct(Http2Connect $http2Connect, $onStreamData, $onRequest, $onWriteBody, $clientStreamUrl, HPack $hpack)
     {
         $this->http2Connect = $http2Connect;
         $this->remainingStreams = Options::getConcurrentStreamLimit();
         $this->allowsPush = Options::isPushEnabled();
-        $this->business = $business;
+        $this->onRequest = $onRequest;
+        $this->onStreamData = $onStreamData;
+        $this->onWriteBody = $onWriteBody;
         $this->hpack = $hpack;
+        $this->clientStreamUrl = $clientStreamUrl;
     }
 
     /** @inheritdoc */
@@ -97,74 +112,11 @@ final class Http2Driver
         $this->shutdown();
     }
 
-    private function send(int $id, Response $response, Request $request)
+    public function send(int $id, Response $response, Request $request)
     {
         try {
-            $status = $response->getStatus();
-            if ($status < 200) {
-                $response->setStatus(505);
-                throw new ClientException("1xx response codes are not supported in HTTP/2", Http2Parser::HTTP_1_1_REQUIRED);
-            }
-            $headers = \array_merge([":status" => $status], $response->getHeaders());
-            unset($headers["connection"], $headers["keep-alive"], $headers["transfer-encoding"]);
-            $headers["date"] = [$this->formatDateHeader()];
-            $trailers = $response->getTrailers();
-            //if (empty($trailers)) {
-            //    $headers["content-length"] = [strlen($response->getBody())];
-            //} else {
-            //    $headers["transfer-encoding"] = ["chunked"];  //HTTP2 是没有 chunked 的！
-            //}
-            //对于 HTTP/1.1POST请求，客户端应该发送Content-Length标头，请参阅https://datatracker.ietf.org/doc/html/rfc7230#section-3.3.2。
-            //对于 HTTP/2，Content-Length标头不是强制性的（请参阅https://datatracker.ietf.org/doc/html/rfc7540#section-8.1.2.6），因为该协议具有endStream指示内容结束的标志。
-            $headers["server"] = ["XiaoYangGuang"];
-            foreach ($response->getPushes() as $push) {
-                $headers["link"][] = "<{$push["uri"]}>; rel=preload";
-                if ($this->allowsPush) {
-                    $this->sendPushPromise($request, $id, $push["header"]);
-                }
-            }
-            $headers = $this->encodeHeaders($headers);
-            if (\strlen($headers) > $this->maxFrameSize) {
-                $split = \str_split($headers, $this->maxFrameSize);
-                $headers = \array_shift($split);
-                $this->writeFrame($headers, Http2Parser::HEADERS, Http2Parser::NO_FLAG, $id);
-                $headers = \array_pop($split);
-                foreach ($split as $msgPart) {
-                    $this->writeFrame($msgPart, Http2Parser::CONTINUATION, Http2Parser::NO_FLAG, $id);
-                }
-                $this->writeFrame($headers, Http2Parser::CONTINUATION, Http2Parser::END_HEADERS, $id);
-            } else {
-                $this->writeFrame($headers, Http2Parser::HEADERS, Http2Parser::END_HEADERS, $id);
-            }
-            if ($request->getMethod() === "HEAD") {
-                $this->streams[$id]->state |= Http2Stream::LOCAL_CLOSED;
-                $this->writeData("", $id);
-                return;
-            }
-            if (empty($trailers)) { //设置本地关闭状态，在data流里面就发送END_STREAM否则就在发送$trailers时候发送END_STREAM
-                $this->streams[$id]->state |= Http2Stream::LOCAL_CLOSED;
-            }
-            $body = $response->getBody();
-            $this->writeData($body, $id);
-            if (!isset($this->streams[$id])) {
-                return;
-            }
-            if ($trailers) {
-                $this->streams[$id]->state |= Http2Stream::LOCAL_CLOSED;
-                $headers = $this->encodeHeaders($trailers);
-                if (\strlen($headers) > $this->maxFrameSize) {
-                    $split = \str_split($headers, $this->maxFrameSize);
-                    $headers = \array_shift($split);
-                    $this->writeFrame($headers, Http2Parser::HEADERS, Http2Parser::NO_FLAG, $id);
-                    $headers = \array_pop($split);
-                    foreach ($split as $msgPart) {
-                        $this->writeFrame($msgPart, Http2Parser::CONTINUATION, Http2Parser::NO_FLAG, $id);
-                    }
-                    $this->writeFrame($headers, Http2Parser::CONTINUATION, Http2Parser::END_HEADERS | Http2Parser::END_STREAM, $id);
-                } else {
-                    $this->writeFrame($headers, Http2Parser::HEADERS, Http2Parser::END_HEADERS | Http2Parser::END_STREAM, $id);
-                }
-            }
+            $this->sendHeader($id, $response, $request);
+            $this->sendBody($id, $response, $request);
         } catch (ClientException $exception) {
             $error = $exception->getCode() ?? Http2Parser::CANCEL;
             $error = $error ?? Http2Parser::INTERNAL_ERROR;
@@ -173,6 +125,88 @@ final class Http2Driver
         } finally {
             if ($this->streams[$id]->state & Http2Stream::REMOTE_CLOSED) {
                 $this->releaseStream($id);
+            }
+        }
+    }
+
+
+    public function sendHeader(int $id, Response $response, Request $request)
+    {
+        $status = $response->getStatus();
+        if ($status < 200) {
+            $response->setStatus(505);
+            throw new ClientException("1xx response codes are not supported in HTTP/2", Http2Parser::HTTP_1_1_REQUIRED);
+        }
+        $headers = \array_merge([":status" => $status], $response->getHeaders());
+        unset($headers["connection"], $headers["keep-alive"], $headers["transfer-encoding"]);
+        $headers["date"] = [$this->formatDateHeader()];
+        $trailers = $response->getTrailers();
+        //if (empty($trailers)) {
+        //    $headers["content-length"] = [strlen($response->getBody())];
+        //} else {
+        //    $headers["transfer-encoding"] = ["chunked"];  //HTTP2 是没有 chunked 的！
+        //}
+        //对于 HTTP/1.1POST请求，客户端应该发送Content-Length标头，请参阅https://datatracker.ietf.org/doc/html/rfc7230#section-3.3.2。
+        //对于 HTTP/2，Content-Length标头不是强制性的（请参阅https://datatracker.ietf.org/doc/html/rfc7540#section-8.1.2.6），因为该协议具有endStream指示内容结束的标志。
+        $headers["server"] = ["XiaoYangGuang"];
+        foreach ($response->getPushes() as $push) {
+            $headers["link"][] = "<{$push["uri"]}>; rel=preload";
+            if ($this->allowsPush) {
+                $this->sendPushPromise($request, $id, $push["header"]);
+            }
+        }
+        $headers = $this->encodeHeaders($headers);
+        if (\strlen($headers) > $this->maxFrameSize) {
+            $split = \str_split($headers, $this->maxFrameSize);
+            $headers = \array_shift($split);
+            $this->writeFrame($headers, Http2Parser::HEADERS, Http2Parser::NO_FLAG, $id);
+            $headers = \array_pop($split);
+            foreach ($split as $msgPart) {
+                $this->writeFrame($msgPart, Http2Parser::CONTINUATION, Http2Parser::NO_FLAG, $id);
+            }
+            $this->writeFrame($headers, Http2Parser::CONTINUATION, Http2Parser::END_HEADERS, $id);
+        } else {
+            $this->writeFrame($headers, Http2Parser::HEADERS, Http2Parser::END_HEADERS, $id);
+        }
+        if ($request->getMethod() === "HEAD") {
+            $this->streams[$id]->state |= Http2Stream::LOCAL_CLOSED;
+            $this->writeData("", $id);
+            return;
+        }
+        if (empty($trailers)) { //设置本地关闭状态，在data流里面就发送END_STREAM否则就在发送$trailers时候发送END_STREAM
+            $this->streams[$id]->state |= Http2Stream::LOCAL_CLOSED;
+        }
+    }
+
+    public function sendBody(int $id, Response $response, Request $request)
+    {
+        //分隔成函数
+        $trailers = $response->getTrailers();
+        if (!in_array($request->path(), $this->clientStreamUrl)) {
+            if (is_callable($this->onWriteBody)) {
+                //服务端流模式在此处不停的发送帧
+                ($this->onWriteBody)($this, $request, $response);
+            }
+        }
+        $body = $response->getBody();
+        $this->writeData($body, $id);
+        if (!isset($this->streams[$id])) {
+            return;
+        }
+        if ($trailers) {
+            $this->streams[$id]->state |= Http2Stream::LOCAL_CLOSED;
+            $headers = $this->encodeHeaders($trailers);
+            if (\strlen($headers) > $this->maxFrameSize) {
+                $split = \str_split($headers, $this->maxFrameSize);
+                $headers = \array_shift($split);
+                $this->writeFrame($headers, Http2Parser::HEADERS, Http2Parser::NO_FLAG, $id);
+                $headers = \array_pop($split);
+                foreach ($split as $msgPart) {
+                    $this->writeFrame($msgPart, Http2Parser::CONTINUATION, Http2Parser::NO_FLAG, $id);
+                }
+                $this->writeFrame($headers, Http2Parser::CONTINUATION, Http2Parser::END_HEADERS | Http2Parser::END_STREAM, $id);
+            } else {
+                $this->writeFrame($headers, Http2Parser::HEADERS, Http2Parser::END_HEADERS | Http2Parser::END_STREAM, $id);
             }
         }
     }
@@ -230,7 +264,11 @@ final class Http2Driver
         } else {
             $this->writeFrame($headers, Http2Parser::PUSH_PROMISE, Http2Parser::END_HEADERS, $streamId);
         }
-        $response = ($this->business)($request);
+        if (is_callable($this->onRequest)) {
+            $response = ($this->onRequest)($request);
+        } else {
+            $response = new Response(200, ['content-type' => ['text/html'],], "");
+        }
         $this->send($streamId, $response, $request);
     }
 
@@ -250,7 +288,7 @@ final class Http2Driver
      * @param string $data
      * @param int $id
      */
-    private function writeData(string $data, int $id)
+    public function writeData(string $data, int $id)
     {
         \assert(isset($this->streams[$id]), "The stream was closed");
         $this->streams[$id]->buffer .= $data;
@@ -447,7 +485,7 @@ final class Http2Driver
         }
         $this->pinged = 0;
         if ($ended) {  //如果是结束流表示没有请求体
-            $request = new Request($this->http2Connect, $headers);
+            $request = new Request($streamId, $this->http2Connect, $headers);
             $this->streamIdMap[$streamId] = $request;
             return;
         }
@@ -467,8 +505,17 @@ final class Http2Driver
             }
             $stream->expectedLength = (int)$contentLength;
         }
-        $request = new Request($this->http2Connect, $headers);
+        $request = new Request($streamId, $this->http2Connect, $headers);
         $this->streamIdMap[$streamId] = $request;
+        // 如果是客户端流模式，这里应该给前端返回头响应
+        if (in_array($request->path(), $this->clientStreamUrl)) {
+            if (is_callable($this->onRequest)) {
+                $response = ($this->onRequest)($request);
+            } else {
+                $response = new Response(200, ['content-type' => ['text/html'],], "");
+            }
+            $this->sendHeader($streamId, $response, $request);
+        }
     }
 
     /**
@@ -500,8 +547,13 @@ final class Http2Driver
             $stream->expectedLength -= $length;
         }
         /** @var Request $request */
-        $request = $this->streamIdMap[$streamId];
-        $request->appendData($data);
+        $request = $this->streamIdMap[$streamId];;
+        if (in_array($request->path(), $this->clientStreamUrl)) {
+            // 客户端流模式在此处不停的发送帧  需要先把头信息发送回去再发送data帧
+            if (is_callable($this->onStreamData)) ($this->onStreamData)($this, $data, $streamId);
+        } else {
+            $request->appendData($data);
+        }
         if ($stream->serverWindow <= self::MINIMUM_WINDOW) {
             if (!isset($this->streams[$streamId])) return;
             $stream = $this->streams[$streamId];
@@ -513,11 +565,7 @@ final class Http2Driver
                 return;
             }
             $stream->serverWindow += $increment;
-            $this->writeFrame(
-                \pack("N", $increment),
-                Http2Parser::WINDOW_UPDATE,
-                Http2Parser::NO_FLAG,
-                $streamId
+            $this->writeFrame(\pack("N", $increment), Http2Parser::WINDOW_UPDATE, Http2Parser::NO_FLAG, $streamId
             );
         }
     }
@@ -536,9 +584,18 @@ final class Http2Driver
             if (!in_array($request->getMethod(), Options::getAllowedMethods())) {
                 $response = new Response(405); //METHOD_NOT_ALLOWED
             } else {
-                $response = ($this->business)($request);
+                if (is_callable($this->onRequest)) {
+                    $response = ($this->onRequest)($request);
+                } else {
+                    $response = new Response(200, ['content-type' => ['text/html'],], "");
+                }
             }
-            $this->send($streamId, $response, $request);
+            if (in_array($request->path(), $this->clientStreamUrl)) {
+                //客户端是流传输data过来,因为已经把header传输回去了，当前只需要传递body回去
+                $this->sendBody($streamId, $response, $request);
+            } else {
+                $this->send($streamId, $response, $request);
+            }
         } finally {
             if (!isset($this->streams[$streamId])) {
                 return;
@@ -589,7 +646,7 @@ final class Http2Driver
         }
     }
 
-    //接收设置帧
+//接收设置帧
     public function handleSettings(array $settings): void
     {
         foreach ($settings as $key => $value) {

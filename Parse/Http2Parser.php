@@ -17,6 +17,7 @@ use Frame\RstStreamFrame;
 use Frame\SettingsFrame;
 use Frame\WindowUpdateFrame;
 use Hpack\HPack;
+use Workerman\Connection\TcpConnection;
 
 final class Http2Parser
 {
@@ -132,28 +133,56 @@ final class Http2Parser
      * @param Options $options
      * @param callable $business
      */
-    public function __construct(Http2Connect $http2Connect, callable $business)
+    public function __construct(Http2Connect $http2Connect, $onStreamData, $onRequest, $onWriteBody, $clientStreamUrl)
     {
         $this->http2Connect = $http2Connect;
         $this->hpack = new HPack();
-        $this->handler = new Http2Driver($http2Connect, $business, $this->hpack);
+        $this->handler = new Http2Driver($http2Connect, $onStreamData, $onRequest, $onWriteBody, $clientStreamUrl, $this->hpack);
     }
 
 
     /**
      * @param $data
      */
-    public function parse($data)
+    public function parse($data, TcpConnection $connection)
     {
         $length = strlen($data);
         self::DebugLog("========================data in {$length}===========================");
         $this->dataBuffer = $this->dataBuffer . $data;
         if (!$this->handsFlag) {
-            if (strpos($this->dataBuffer, "HTTP/1.")) {//初略判断http1
-                $this->http2Connect->connection->close("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json;\r\ncharset=utf-8\r\nContent-Length: 20\r\n\r\n目前未兼容http1");
-                return;
+            if (strpos($this->dataBuffer, "HTTP/1.") and 0 === \strpos($this->dataBuffer, 'GET')) {  //初略判断http1
+                //h2c升级握手
+                if ($connection->transport == "ssl") {
+                    $this->http2Connect->connection->close("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json;\r\ncharset=utf-8\r\nContent-Length: 20\r\n\r\n目前未兼容http1");
+                    return;
+                }
+                $header_end_pos = \strpos($this->dataBuffer, "\r\n\r\n");
+                if (!$header_end_pos) {
+                    $this->http2Connect->connection->close("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json;\r\ncharset=utf-8\r\nContent-Length: 20\r\n\r\n目前未兼容http1");
+                    return;
+                }
+                if (!\preg_match("/HTTP2-Settings: *(.*?)\r\n/i", $this->dataBuffer, $match)) {
+                    $this->http2Connect->connection->close("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json;\r\ncharset=utf-8\r\nContent-Length: 20\r\n\r\n目前未兼容http1");
+                    return;
+                }
+                $h2cSettings = \base64_decode(\strtr($match[1], "-_", "+/"), true);
+                $handshake_message = "HTTP/1.1 101 Switching Protocols\r\n"
+                    . "Connection: Upgrade\r\n"
+                    . "Upgrade: h2c\r\n\r\n";
+                $this->http2Connect->connection->send($handshake_message);
+                //握手协商里面是设置帧
+                $f = new SettingsFrame();
+                $f->parseBody($h2cSettings);
+                $this->parseSettings($f);
+                $this->dataBuffer = "";
+            } else {
+                //h2 握手
+                if (0 === \strpos($this->dataBuffer, self::PREFACE)) {
+                    $this->dataBuffer = \substr($this->dataBuffer, \strlen(self::PREFACE));
+                } else {
+                    $this->http2Connect->connection->close();
+                }
             }
-            $this->dataBuffer = \substr($this->dataBuffer, \strlen(self::PREFACE));
             $this->handsFlag = true;
             $this->handler->writeFrame(\pack("nNnNnNnN",
                 self::INITIAL_WINDOW_SIZE,
@@ -169,6 +198,8 @@ final class Http2Parser
                 Http2Parser::NO_FLAG
             );
         }
+
+
         try {
             while (true) {
                 if (strlen($this->dataBuffer) < 9) break;
@@ -466,7 +497,20 @@ final class Http2Parser
 
     public static function LogFrame(string $action, int $frameType, int $frameFlags, int $streamId, int $frameLength, string $action1 = "")
     {
-        self::DebugLog($action . ' ' . Frame::FRAMES[$frameType] . ' flags = ' . \bin2hex(\chr($frameFlags)) . ', stream = ' . $streamId . ', length = ' . $frameLength . "   " . $action1);
+        $flags = "";
+        if ($frameFlags & self::END_STREAM) {
+            $flags .= "END_STREAM ";
+        } else if ($frameFlags & self::END_HEADERS) {
+            $flags .= "END_HEADERS ";
+        } else if ($frameFlags & self::PADDED) {
+            $flags .= "PADDED ";
+        } else if ($frameFlags & self::PRIORITY_FLAG) {
+            $flags .= "PRIORITY_FLAG ";
+        } else {
+            $flags .= "NO_FLAG ";
+        }
+        self::DebugLog($action . ' ' . Frame::FRAMES[$frameType] . ' flags = ' . $flags . ', stream = ' . $streamId . ', length = ' . $frameLength . "   " . $action1);
+        //self::DebugLog($action . ' ' . Frame::FRAMES[$frameType] . ' flags = ' . $flags . \bin2hex(\chr($frameFlags)) . ', stream = ' . $streamId . ', length = ' . $frameLength . "   " . $action1);
     }
 
     public static function DebugLog(string $msg)
