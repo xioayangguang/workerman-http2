@@ -1,6 +1,5 @@
 # 基于workerman 实现http2服务端
 
-* 目前握手方式只实现ssl协商上层协议
 ### 运行http2服务端的方式
 * 修改证书  http2_server.php
 
@@ -26,7 +25,7 @@ php http2_server.php start
 
 * 浏览器打开
 https://xxxxxx
-![img.png](img.png)
+![img.png](./pic/img.png)
 
 
 
@@ -66,4 +65,4 @@ creds, err0 := credentials.NewClientTLSFromFile("./draw.jiangtuan.cn_bundle.pem"
 go run main.go
 ```
 * 运行结果
-![img_2.png](img_2.png)
+![img_2.png](./pic/img_2.png)

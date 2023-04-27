@@ -1,2 +1,1 @@
-php grpc_server.php http2_server.php
-pause
+php  http2_server.php grpc_server_simple.php grpc_server_server_streaming.php grpc_server_client_streaming.php grpc_server_bidirectional_streaming.php

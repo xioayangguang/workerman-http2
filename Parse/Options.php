@@ -42,7 +42,7 @@ final class Options
 
     public static function logFile(): string
     {
-        return "http2.log";
+        return "./log/http2.log";
     }
 
     public static function doubleStream(): bool
