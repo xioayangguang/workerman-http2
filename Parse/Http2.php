@@ -38,12 +38,14 @@ class Http2 extends Worker
      * @param string $socket_name
      * @param array $context_option
      */
-    public function __construct($socket_name, array $context_option)
+    public function __construct($socket_name, array $context_option = [])
     {
-        if (!isset($context_option['ssl']["local_cert"], $context_option['ssl']["local_pk"])) {
-            throw new \Exception("Currently only ssl-based handshake is implemented");
+        if (strpos($socket_name, "ssl") === 0) {
+            if (!isset($context_option['ssl']["local_cert"], $context_option['ssl']["local_pk"])) {
+                throw new \Exception("Currently only ssl-based handshake is implemented");
+            }
+            $context_option['ssl']['alpn_protocols'] = 'h2';
         }
-        $context_option['ssl']['alpn_protocols'] = 'h2, http/1.1';
         parent::__construct($socket_name, $context_option);
         $backtrace = debug_backtrace();
         $this->_autoloadRootPath = dirname($backtrace[0]['file']);

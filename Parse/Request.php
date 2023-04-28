@@ -92,7 +92,7 @@ class Request
      */
     public function path(): string
     {
-        return $this->_header["path"];
+        return $this->_header["path"] ?? "/";
     }
 
     /**

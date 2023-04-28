@@ -111,7 +111,7 @@ final class Http2Parser
     private $hpack;
 
     /**
-     * 是否握手成功
+     * http2是否握手成功
      * @var bool
      */
     private $handsFlag = false;
@@ -126,6 +126,15 @@ final class Http2Parser
      * @var string
      */
     private $dataBuffer = "";
+    /**
+     * 是否http1.1升级成功
+     * @var bool
+     */
+    private $upgrade;
+    /**
+     * @var \Workerman\Protocols\Http\Request
+     */
+    private $upgradeRequest;
 
 
     /**
@@ -140,7 +149,6 @@ final class Http2Parser
         $this->handler = new Http2Driver($http2Connect, $onStreamData, $onRequest, $onWriteBody, $clientStreamUrl, $this->hpack);
     }
 
-
     /**
      * @param $data
      */
@@ -150,8 +158,7 @@ final class Http2Parser
         self::DebugLog("========================data in {$length}===========================");
         $this->dataBuffer = $this->dataBuffer . $data;
         if (!$this->handsFlag) {
-            if (strpos($this->dataBuffer, "HTTP/1.") and 0 === \strpos($this->dataBuffer, 'GET')) {  //初略判断http1
-                //h2c升级握手
+            if (strpos($this->dataBuffer, "HTTP/1.")) {  //初略判断http1 //h2c升级握手升级部分
                 if ($connection->transport == "ssl") {
                     $this->http2Connect->connection->close("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json;\r\ncharset=utf-8\r\nContent-Length: 20\r\n\r\n目前未兼容http1");
                     return;
@@ -165,41 +172,37 @@ final class Http2Parser
                     $this->http2Connect->connection->close("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json;\r\ncharset=utf-8\r\nContent-Length: 20\r\n\r\n目前未兼容http1");
                     return;
                 }
-                $h2cSettings = \base64_decode(\strtr($match[1], "-_", "+/"), true);
+                $this->upgradeRequest = new \Workerman\Protocols\Http\Request($this->dataBuffer);
                 $handshake_message = "HTTP/1.1 101 Switching Protocols\r\n"
                     . "Connection: Upgrade\r\n"
                     . "Upgrade: h2c\r\n\r\n";
+                self::DebugLog("发送101同意升级");
                 $this->http2Connect->connection->send($handshake_message);
-                //握手协商里面是设置帧
-                $f = new SettingsFrame();
-                $f->parseBody($h2cSettings);
-                $this->parseSettings($f);
                 $this->dataBuffer = "";
+                $this->upgrade = true;
+                return;
             } else {
-                //h2 握手
                 if (0 === \strpos($this->dataBuffer, self::PREFACE)) {
                     $this->dataBuffer = \substr($this->dataBuffer, \strlen(self::PREFACE));
                 } else {
                     $this->http2Connect->connection->close();
                 }
+                $this->handsFlag = true;
+                $this->handler->writeFrame(\pack("nNnNnNnN",
+                    self::INITIAL_WINDOW_SIZE,
+                    Options::getBodySizeLimit(),
+                    Http2Parser::MAX_CONCURRENT_STREAMS,
+                    Options::getConcurrentStreamLimit(),
+                    Http2Parser::MAX_HEADER_LIST_SIZE,
+                    Options::getHeaderSizeLimit(),
+                    Http2Parser::MAX_FRAME_SIZE,
+                    self::DEFAULT_MAX_FRAME_SIZE
+                ), Http2Parser::SETTINGS, Http2Parser::NO_FLAG);
             }
-            $this->handsFlag = true;
-            $this->handler->writeFrame(\pack("nNnNnNnN",
-                self::INITIAL_WINDOW_SIZE,
-                Options::getBodySizeLimit(),
-                Http2Parser::MAX_CONCURRENT_STREAMS,
-                Options::getConcurrentStreamLimit(),
-                Http2Parser::MAX_HEADER_LIST_SIZE,
-                Options::getHeaderSizeLimit(),
-                Http2Parser::MAX_FRAME_SIZE,
-                self::DEFAULT_MAX_FRAME_SIZE
-            ),
-                Http2Parser::SETTINGS,
-                Http2Parser::NO_FLAG
-            );
+            if ($this->upgrade) {
+                $this->handler->upgrade($this->http2Connect, $this->upgradeRequest);
+            }
         }
-
-
         try {
             while (true) {
                 if (strlen($this->dataBuffer) < 9) break;

@@ -48,3 +48,21 @@ HTTP/2 connection error for client 127.0.0.1:5524: Invalid Frame Header
 
 HTTP/2 connection error for client 127.0.0.1:5526: Invalid Frame Header
 
+HTTP/2 connection error for client 127.0.0.1:11988: Invalid Frame Header
+
+HTTP/2 connection error for client 127.0.0.1:12036: Invalid Frame Header
+
+HTTP/2 connection error for client 127.0.0.1:12515: Invalid Frame Header
+
+HTTP/2 connection error for client 127.0.0.1:13143: Invalid Frame Header
+
+HTTP/2 connection error for client 127.0.0.1:13381: Invalid Frame Header
+
+HTTP/2 connection error for client 127.0.0.1:13558: Invalid Frame Header
+
+Received GOAWAY frame from 127.0.0.1:1941 with error code 1
+
+Received GOAWAY frame from 127.0.0.1:1961 with error code 1
+
+Received GOAWAY frame from 127.0.0.1:1966 with error code 1
+

@@ -17,5 +17,5 @@ $http2 = new Http2('ssl://0.0.0.0:443', ['ssl' => [
 $http2->onRequest = function (Request $request) {
     return new Response(200, ['content-type' => ['text/html'], 'a' => ['hello world']], "<h1>hello h2!<h1>");
 };
-$http2->name = 'http2';
+$http2->name = 'http2-h2';
 Http2::runAll();

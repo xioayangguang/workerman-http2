@@ -116,6 +116,11 @@ final class Http2Driver
     {
         try {
             $this->sendHeader($id, $response, $request);
+            if ($request->getMethod() === "HEAD") {
+                $this->streams[$id]->state |= Http2Stream::LOCAL_CLOSED;
+                $this->writeData("", $id);
+                return;
+            }
             $this->sendBody($id, $response, $request);
         } catch (ClientException $exception) {
             $error = $exception->getCode() ?? Http2Parser::CANCEL;
@@ -167,11 +172,6 @@ final class Http2Driver
             $this->writeFrame($headers, Http2Parser::CONTINUATION, Http2Parser::END_HEADERS, $id);
         } else {
             $this->writeFrame($headers, Http2Parser::HEADERS, Http2Parser::END_HEADERS, $id);
-        }
-        if ($request->getMethod() === "HEAD") {
-            $this->streams[$id]->state |= Http2Stream::LOCAL_CLOSED;
-            $this->writeData("", $id);
-            return;
         }
         if (empty($trailers)) { //设置本地关闭状态，在data流里面就发送END_STREAM否则就在发送$trailers时候发送END_STREAM
             $this->streams[$id]->state |= Http2Stream::LOCAL_CLOSED;
@@ -578,31 +578,28 @@ final class Http2Driver
         if ($stream->expectedLength) {    //预期还需要收到的数据长度
             throw new Http2StreamException("Body length does not match content-length header", $streamId, Http2Parser::PROTOCOL_ERROR);
         }
-        try {
-            /** @var Request $request */
-            $request = $this->streamIdMap[$streamId];
-            if (!in_array($request->getMethod(), Options::getAllowedMethods())) {
-                $response = new Response(405); //METHOD_NOT_ALLOWED
+        /** @var Request $request */
+        $request = $this->streamIdMap[$streamId];
+        if (!in_array($request->getMethod(), Options::getAllowedMethods())) {
+            $response = new Response(405); //METHOD_NOT_ALLOWED
+        } else {
+            if (is_callable($this->onRequest)) {
+                $response = ($this->onRequest)($request);
             } else {
-                if (is_callable($this->onRequest)) {
-                    $response = ($this->onRequest)($request);
-                } else {
-                    $response = new Response(200, ['content-type' => ['text/html'],], "");
-                }
+                $response = new Response(200, ['content-type' => ['text/html'],], "");
             }
-            if (in_array($request->path(), $this->clientStreamUrl)) {
-                //客户端是流传输data过来,因为已经把header传输回去了，当前只需要传递body回去
-                $this->sendBody($streamId, $response, $request);
-            } else {
-                $this->send($streamId, $response, $request);
-            }
-        } finally {
-            if (!isset($this->streams[$streamId])) {
-                return;
-            }
-            if ($stream->state & Http2Stream::LOCAL_CLOSED && $stream->buffer === "") {
-                $this->releaseStream($streamId);
-            }
+        }
+        if (in_array($request->path(), $this->clientStreamUrl)) {
+            //客户端是流传输data过来,因为已经把header传输回去了，当前只需要传递body回去
+            $this->sendBody($streamId, $response, $request);
+        } else {
+            $this->send($streamId, $response, $request);
+        }
+        //if (!isset($this->streams[$streamId])) {
+        //    return;
+        //}
+        if ($stream->state & Http2Stream::LOCAL_CLOSED && $stream->buffer === "") {
+            $this->releaseStream($streamId);
         }
     }
 
@@ -727,5 +724,22 @@ final class Http2Driver
             return $cachedFormattedDate;
         }
         return $cachedFormattedDate = \gmdate("D, d M Y H:i:s", $cachedTimestamp = $timestamp) . " GMT";
+    }
+
+    //http1.1升级h2c
+    public function upgrade($http2Connect, \Workerman\Protocols\Http\Request $request)
+    {
+        $header = $request->header();
+        $header["method"] = $request->method();
+        $header["uri"] = $request->uri();
+        $header["queryString"] = $request->queryString();
+        $header["path"] = $request->path();
+        $this->streams[1] = new Http2Stream(
+            0, $this->initialWindowSize,
+            Http2Stream::RESERVED | Http2Stream::REMOTE_CLOSED
+        );
+        $this->streamIdMap[1] = new Request(1, $http2Connect, $header, $request->rawBody());
+        $this->remainingStreams--;
+        $this->handleStreamEnd(1);
     }
 }
