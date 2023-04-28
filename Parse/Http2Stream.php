@@ -40,12 +40,35 @@ final class Http2Stream
 
     /** 预期还需要接收的长度 @var int|null */
     public $expectedLength;
+    /**
+     * @var int
+     */
+    private $streamId;
+    /**
+     * @var Http2Driver
+     */
+    private $http2Driver;
 
-    public function __construct(int $serverSize, int $clientSize, int $state = self::OPEN)
+    public function __construct(Http2Driver $http2Driver, int $streamId, int $serverSize, int $clientSize, int $state = self::OPEN)
     {
+        $this->http2Driver = $http2Driver;
+        $this->streamId = $streamId;
         $this->serverWindow = $serverSize;
         $this->maxBodySize = $serverSize;
         $this->clientWindow = $clientSize;
         $this->state = $state;
+    }
+
+
+    /**
+     * @param string $data
+     * @param bool $end 是否是最后一个流
+     */
+    public function sendStream(string $data, bool $end = false)
+    {
+        if ($end) {
+            $this->state |= Http2Stream::LOCAL_CLOSED;
+        }
+        $this->http2Driver->writeData($data, $this->streamId);
     }
 }

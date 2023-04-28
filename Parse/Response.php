@@ -92,6 +92,15 @@ class Response
         508 => 'Loop Detected',
         511 => 'Network Authentication Required',
     ];
+    /**
+     * @var Http2Driver
+     */
+    public $http2Driver;
+    /**
+     * @var int
+     */
+    public $streamId;
+
 
     /**
      * Response constructor.
@@ -183,5 +192,14 @@ class Response
     public function setTrailers(array $trailers)
     {
         $this->_trailers = $trailers;
+    }
+
+
+    //在响应前写入数据，只是在客户端非流式传输的时候有效
+    public function tuckData(string $data)
+    {
+        if ($this->http2Driver instanceof Http2Driver) {
+            $this->http2Driver->writeData($data, $this->streamId);
+        }
     }
 }

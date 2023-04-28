@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 use parse\Http2;
-use Parse\Http2Driver;
+use Parse\Http2Stream;
 use parse\Request;
 use Parse\Response;
 use Pb\HelloRequest;
@@ -16,7 +16,7 @@ $http2 = new Http2('ssl://0.0.0.0:448', ['ssl' => [
     'verify_peer' => false,
     'allow_self_signed' => true,
 ]]);
-
+$http2->name = 'GrpcDoubleStreaming';
 //这个模式下服务端无法一次性获取Body体 (包括客户端流模式和双向流模式)
 //这个模式下收到完整header后回及时返回header
 $http2->setClientStreamUrl([
@@ -30,7 +30,7 @@ $http2->setClientStreamUrl([
 //Grpc双向流模式 onStreamData + onRequest
 
 //只在grpc客户端流模式 和双向流模式下生效 每次有帧数据过来的时候 此时还没生成response对象
-$http2->onStreamData = function (Http2Driver $writeData, string $data, int $streamId) {
+$http2->onStreamData = function (Http2Stream $stream, string $data) {
     static $_body = "";
     $_body .= $data;
     if (strlen($_body) < 5) return;
@@ -44,7 +44,7 @@ $http2->onStreamData = function (Http2Driver $writeData, string $data, int $stre
     $response_message->setReply('回复客户端：' . $obj->getName());
     $data = $response_message->serializeToString();
     $data = pack('CN', 0, strlen($data)) . $data;
-    $writeData->writeData($data, $streamId);
+    $stream->sendStream($data);
 };
 
 //收到了完整的请求 有end_Stream才会调此函数  处理grpc简单模式
@@ -64,5 +64,5 @@ $http2->onRequest = function (Request $request) {
     $response->setTrailers(["grpc-status" => "0", "grpc-message" => ""]);
     return $response;
 };
-$http2->name = 'GrpcDoubleStreaming';
+
 Http2::runAll();
