@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "google/protobuf",
-            "version": "v3.22.2",
+            "version": "v3.22.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/protocolbuffers/protobuf-php.git",
-                "reference": "ff28a64946708e13f2be627b5e5561f247ecf95c"
+                "reference": "0edeee0cc2e2991706e16ab60c7d224e5c0241ba"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/protocolbuffers/protobuf-php/zipball/ff28a64946708e13f2be627b5e5561f247ecf95c",
-                "reference": "ff28a64946708e13f2be627b5e5561f247ecf95c",
+                "url": "https://api.github.com/repos/protocolbuffers/protobuf-php/zipball/0edeee0cc2e2991706e16ab60c7d224e5c0241ba",
+                "reference": "0edeee0cc2e2991706e16ab60c7d224e5c0241ba",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -52,23 +52,29 @@
                 "proto"
             ],
             "support": {
-                "source": "https://github.com/protocolbuffers/protobuf-php/tree/v3.22.2"
+                "source": "https://github.com/protocolbuffers/protobuf-php/tree/v3.22.3"
             },
-            "time": "2023-03-10T17:52:03+00:00"
+            "time": "2023-04-12T23:38:34+00:00"
         },
         {
             "name": "workerman/workerman",
-            "version": "v4.1.9",
+            "version": "v4.1.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/walkor/workerman.git",
-                "reference": "1f92d02c26106b5fbe6f61ea776198aad6e426f7"
+                "reference": "e967b79f95b9251a72acb971be05623ec1a51e83"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/walkor/workerman/zipball/1f92d02c26106b5fbe6f61ea776198aad6e426f7",
-                "reference": "1f92d02c26106b5fbe6f61ea776198aad6e426f7",
-                "shasum": ""
+                "url": "https://api.github.com/repos/walkor/workerman/zipball/e967b79f95b9251a72acb971be05623ec1a51e83",
+                "reference": "e967b79f95b9251a72acb971be05623ec1a51e83",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.0"
@@ -117,7 +123,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2023-03-10T13:59:12+00:00"
+            "time": "2023-05-01T02:12:20+00:00"
         }
     ],
     "packages-dev": [],

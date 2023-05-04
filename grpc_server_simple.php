@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 use parse\Http2;
 use parse\Request;
-use Parse\Response;
+use parse\Response;
 use Pb\HelloRequest;
 use Pb\HelloResponse;
 
