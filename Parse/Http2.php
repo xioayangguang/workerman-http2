@@ -75,6 +75,9 @@ class Http2 extends Worker
         $connection->onMessage = function (TcpConnection $connection, $data) use ($parser) {
             $parser->parse($data, $connection);
         };
+        $connection->onClose = function (TcpConnection $connection) use ($parser) {
+            $parser->onClose();
+        };
     }
 
     public function setClientStreamUrl(array $url): void

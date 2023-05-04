@@ -172,6 +172,7 @@ final class Http2Parser
                     $this->http2Connect->connection->close("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json;\r\ncharset=utf-8\r\nContent-Length: 20\r\n\r\n目前未兼容http1");
                     return;
                 }
+                //HTTP2-Settings忽略设置
                 $this->upgradeRequest = new \Workerman\Protocols\Http\Request($this->dataBuffer);
                 $handshake_message = "HTTP/1.1 101 Switching Protocols\r\n"
                     . "Connection: Upgrade\r\n"
@@ -526,5 +527,10 @@ final class Http2Parser
     public static function Log(string $msg)
     {
         file_put_contents(Options::logFile(), $msg . "\r\n", FILE_APPEND);
+    }
+
+    public function onClose()
+    {
+        $this->handler->stop();
     }
 }
