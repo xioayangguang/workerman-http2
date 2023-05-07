@@ -218,11 +218,11 @@ final class Http2Driver
      */
     private function shutdown(?int $lastId = null, ?\Throwable $reason = null)
     {
-        try {
+        
             $code = $reason ? $reason->getCode() : Http2Parser::GRACEFUL_SHUTDOWN;
             $lastId = $lastId ?? ($id ?? 0);
             $this->writeFrame(\pack("NN", $lastId, $code), Http2Parser::GOAWAY, Http2Parser::NO_FLAG);
-        } finally {
+        
             if (!empty($this->streams)) {
                 $exception = new ClientException($reason->getMessage(), $reason->getCode(), $reason);
                 foreach ($this->streams as $id => $stream) {
@@ -230,7 +230,7 @@ final class Http2Driver
                 }
             }
             $this->http2Connect->close();
-        }
+        
     }
 
     //推送请求
