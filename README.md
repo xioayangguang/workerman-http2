@@ -19,10 +19,7 @@
 
 ```
 composer install
-```
 
-
-```
 php start.php start
 or 
 start.bat  
