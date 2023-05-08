@@ -71,6 +71,12 @@ creds, err0 := credentials.NewClientTLSFromFile("./draw.jiangtuan.cn_bundle.pem"
 ```
 
 * 运行grpc客户端
+
+```
+protoc --php_out=./ ./proto/hello.proto
+```
+
+
 ```
 cd grpcSimple
 go run main.go

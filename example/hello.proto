@@ -6,6 +6,8 @@ package pb;
 
 // 包名
 option go_package = "hello_client/pb";
+option php_namespace = "proto\\pb";
+option php_metadata_namespace = "proto\\metadata";
 
 // 定义服务
 service Greeter {

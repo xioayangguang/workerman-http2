@@ -16,7 +16,7 @@ const (
 )
 
 func main() {
-	creds, err0 := credentials.NewClientTLSFromFile("../draw.jiangtuan.cn_bundle.pem", "draw.jiangtuan.cn")
+	creds, err0 := credentials.NewClientTLSFromFile("./key/draw.jiangtuan.cn_bundle.pem", "draw.jiangtuan.cn")
 	if err0 != nil {
 		log.Fatal("证书错误: ", err0)
 	}

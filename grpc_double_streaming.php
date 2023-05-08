@@ -5,14 +5,14 @@ use parse\Http2;
 use parse\Http2Stream;
 use parse\Request;
 use parse\Response;
-use Pb\HelloRequest;
-use Pb\HelloResponse;
+use proto\pb\HelloRequest;
+use proto\pb\HelloResponse;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
 $http2 = new Http2('ssl://0.0.0.0:448', ['ssl' => [
-    'local_cert' => './key/draw.jiangtuan.cn_bundle.pem',
-    'local_pk' => './key/draw.jiangtuan.cn.key',
+    'local_cert' => './example/key/draw.jiangtuan.cn_bundle.pem',
+    'local_pk' => './example/key/draw.jiangtuan.cn.key',
     'verify_peer' => false,
     'allow_self_signed' => true,
 ]]);
