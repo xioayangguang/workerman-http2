@@ -15,7 +15,7 @@ $http2 = new Http2('ssl://0.0.0.0:444', ['ssl' => [
     'verify_peer' => false,
     'allow_self_signed' => true,
 ]]);
-$http2->name = 'GrpcSimple';
+$http2->name = 'Grpc-Simple';
 //Grpc简单模式 onRequest
 //Grpc服务端流模式 onRequest + onWriteBody
 //Grpc客户端流模式 onStreamData + onRequest
@@ -39,4 +39,7 @@ $http2->onRequest = function (Request $request) {
     return $response;
 };
 
-Http2::runAll();
+if(!defined('GLOBAL_START'))
+{
+    Http2::runAll();
+}

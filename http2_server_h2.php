@@ -13,9 +13,12 @@ $http2 = new Http2('ssl://0.0.0.0:443', ['ssl' => [
     'verify_peer' => false,
     'allow_self_signed' => true,
 ]]);
-$http2->name = 'http2-h2';
+$http2->name = 'Http2-h2';
 $http2->onRequest = function (Request $request) {
     return new Response(200, ['content-type' => ['text/html'], 'a' => ['hello world']], "<h1>hello h2!<h1>");
 };
 
-Http2::runAll();
+if(!defined('GLOBAL_START'))
+{
+    Http2::runAll();
+}

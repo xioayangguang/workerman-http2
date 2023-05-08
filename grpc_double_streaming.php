@@ -16,7 +16,7 @@ $http2 = new Http2('ssl://0.0.0.0:448', ['ssl' => [
     'verify_peer' => false,
     'allow_self_signed' => true,
 ]]);
-$http2->name = 'GrpcDoubleStreaming';
+$http2->name = 'Grpc-DoubleStreaming';
 //这个模式下服务端无法一次性获取Body体 (包括客户端流模式和双向流模式)
 //这个模式下收到完整header后回及时返回header
 $http2->setClientStreamUrl([
@@ -65,4 +65,7 @@ $http2->onRequest = function (Request $request) {
     return $response;
 };
 
-Http2::runAll();
+if(!defined('GLOBAL_START'))
+{
+    Http2::runAll();
+}
