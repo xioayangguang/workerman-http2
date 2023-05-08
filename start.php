@@ -28,3 +28,7 @@ foreach (glob(__DIR__ . '/http2*.php') as $start_file) {
     require_once $start_file;
 }
 Http2::runAll();
+
+//protoc --php_out=./  --grpc_out=./ --plugin=protoc-gen-grpc=C:\Users\93002\go\bin\grpc_php_plugin.exe ./proto/hello.proto
+//protoc --php_out=./   --mix_out=.   ./proto/hello.proto
+//protoc --php_out=./ ./proto/hello.proto
