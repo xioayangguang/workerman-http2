@@ -10,8 +10,6 @@ require_once __DIR__ . '/vendor/autoload.php';
 $http2 = new Http2('ssl://0.0.0.0:443', ['ssl' => [
     'local_cert' => './example/key/draw.jiangtuan.cn_bundle.pem',
     'local_pk' => './example/key/draw.jiangtuan.cn.key',
-    'verify_peer' => false,
-    'allow_self_signed' => true,
 ]]);
 $http2->name = 'Http2-h2';
 $http2->onRequest = function (Request $request) {
