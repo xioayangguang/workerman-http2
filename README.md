@@ -1,18 +1,21 @@
 # 基于workerman 实现http2服务端
 
 ### 运行http2服务端的方式
-* 修改证书  http2_server.php
+
+* 添加host
+127.0.0.1 xxxxxxxx.cn
+
+
+* 修改证书路径
 
 ```
 'ssl' => [
-     'local_cert' => './draw.jiangtuan.cn_bundle.pem', //修改成自己的路径
-     'local_pk' => './draw.jiangtuan.cn.key', // 修改成自己的路径
-     'verify_peer' => false,
-     'allow_self_signed' => true,
+     'local_cert' => './draw.xxx.cn_bundle.pem', //修改成自己的路径
+     'local_pk' => './draw.xxx.cn.key', // 修改成自己的路径
 ]
 ```
 
-运行方式： 
+运行： 
 
 ```
 composer install
@@ -20,69 +23,15 @@ composer install
 
 
 ```
-php http2_server.php start
+php start.php start
+or 
+start.bat  
 ```
 
 * 浏览器打开
-https://xxxxxx
-![img.png](./pic/img.png)
+https://xxxx.cn/
+![img.png](./example/pic/img.png)
 
-
-
-# 基于Http2实现Grpc服务端
-### 运行grpc服务端的方式
-
-* 修改证书  grpc_server.php
-
-```
-'ssl' => [
-     'local_cert' => './draw.jiangtuan.cn_bundle.pem', //修改成自己的路径
-     'local_pk' => './draw.jiangtuan.cn.key', // 修改成自己的路径
-     'verify_peer' => false,
-     'allow_self_signed' => true,
-]
-```
-
-运行方式：
-
-```
-composer install
-```
-
-### windows运行如下
-```
-php  http2_server.php grpc_server_simple.php grpc_server_server_streaming.php grpc_server_client_streaming.php grpc_server_bidirectional_streaming.php
-
-```
-
-### Linux运行如下
-
-```
-php  http2_server.php start  
-php  .... start  
-以此类推
-```
-
-* 进入go-grpc-client-example 修改main.go证书为自己的
-
-```
-creds, err0 := credentials.NewClientTLSFromFile("./draw.jiangtuan.cn_bundle.pem", "draw.jiangtuan.cn")
-
-```
-
-* 运行grpc客户端
-
-```
-protoc --php_out=./ ./proto/hello.proto
-```
-
-
-```
-cd grpcSimple
-go run main.go
-
-....
-以此类推
-```
-* 运行结果
-![img_2.png](./pic/img_2.png)
+  
+* grpc 运行结果(注意自己的证书路径)
+![img_2.png](./example/pic/img_2.png)
