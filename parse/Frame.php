@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace parse;
 
 use exception\InvalidFrameException;
-use Frame\Flags;
+use frame\Flags;
 
 abstract class Frame
 {

@@ -5,17 +5,17 @@ namespace parse;
 
 use exception\Http2ConnectionException;
 use exception\Http2StreamException;
-use Frame\ContinuationFrame;
-use Frame\DataFrame;
-use Frame\Flag;
-use Frame\GoAwayFrame;
-use Frame\HeadersFrame;
-use Frame\PingFrame;
-use Frame\PriorityFrame;
-use Frame\PushPromiseFrame;
-use Frame\RstStreamFrame;
-use Frame\SettingsFrame;
-use Frame\WindowUpdateFrame;
+use frame\ContinuationFrame;
+use frame\DataFrame;
+use frame\Flag;
+use frame\GoAwayFrame;
+use frame\HeadersFrame;
+use frame\PingFrame;
+use frame\PriorityFrame;
+use frame\PushPromiseFrame;
+use frame\RstStreamFrame;
+use frame\SettingsFrame;
+use frame\WindowUpdateFrame;
 use hpack\HPack;
 use Workerman\Connection\TcpConnection;
 
