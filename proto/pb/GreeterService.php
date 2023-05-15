@@ -2,16 +2,7 @@
 declare(strict_types=1);
 # source: hello.proto
 
-namespace grpcHandler;
-
-use Pb\HelloRequest1;
-use Pb\HelloRequest2;
-use Pb\HelloRequest3;
-use Pb\HelloRequest4;
-use Pb\HelloResponse1;
-use Pb\HelloResponse2;
-use Pb\HelloResponse3;
-use Pb\HelloResponse4;
+namespace proto\pb;
 
 class GreeterService
 {
@@ -30,10 +21,10 @@ class GreeterService
     ];
 
     public static $Parameter = [
-        "/pb.Greeter/SayHello" => HelloRequest1::class,
-        "/pb.Greeter/ClientSayHello" => HelloRequest2::class,
-        "/pb.Greeter/ServerSayHello" => HelloRequest3::class,
-        "/pb.Greeter/DoubleSayHello" => HelloRequest4::class,
+        "/pb.Greeter/SayHello" => HelloRequest::class,
+        "/pb.Greeter/ClientSayHello" => HelloRequest::class,
+        "/pb.Greeter/ServerSayHello" => HelloRequest::class,
+        "/pb.Greeter/DoubleSayHello" => HelloRequest::class,
     ];
 
     public const NAME = "pb.Greeter";
@@ -41,12 +32,12 @@ class GreeterService
     /**
      *此处实现自己的业务逻辑
      * Simple
-     * @param HelloRequest1 $request
-     * @return HelloResponse1
+     * @param HelloRequest $request
+     * @return HelloResponse
      */
-    public static function SayHello(HelloRequest1 $request): HelloResponse1
+    public static function SayHello(HelloRequest $request): HelloResponse
     {
-        $response_message = new HelloResponse1();
+        $response_message = new HelloResponse();
         $response_message->setReply('Hello ' . $request->getName());
         return $response_message;
     }
@@ -54,13 +45,13 @@ class GreeterService
     /**
      *此处实现自己的业务逻辑
      * ClientStreaming 一旦返回HelloResponse2对象就表示结束当前流
-     * @param HelloRequest2 $request
+     * @param HelloRequest $request
      */
-    public static function ClientSayHello(HelloRequest2 $request): ?HelloResponse2
+    public static function ClientSayHello(HelloRequest $request): ?HelloResponse
     {
         $name = $request->getName();
         if ($name == "end") {
-            $HelloResponse2 = new  HelloResponse2();
+            $HelloResponse2 = new  HelloResponse();
             $HelloResponse2->setReply('helloEnd');
             return $HelloResponse2;
         } else {
@@ -73,13 +64,13 @@ class GreeterService
     /**
      *此处实现自己的业务逻辑
      * ServerStreaming
-     * @param HelloRequest3 $request
+     * @param HelloRequest $request
      */
-    public static function ServerSayHello(HelloRequest3 $request): \Generator
+    public static function ServerSayHello(HelloRequest $request): \Generator
     {
         $name = $request->getName();
         var_dump($name);
-        $HelloResponse3 = new HelloResponse3();
+        $HelloResponse3 = new HelloResponse();
         for ($i = 0; $i < 3; $i++) {
             $HelloResponse3->setReply('hello' . $i);
             yield $HelloResponse3;
@@ -90,13 +81,13 @@ class GreeterService
     /**
      *此处实现自己的业务逻辑
      * DoubleStreaming  如需要结束流则设置  $HelloResponse4->endStreaming = true;
-     * @param HelloRequest4 $request
+     * @param HelloRequest $request
      */
-    public static function DoubleSayHello(HelloRequest4 $request): \Generator
+    public static function DoubleSayHello(HelloRequest $request): \Generator
     {
         $name = $request->getName();
         var_dump($name);
-        $HelloResponse2 = new  HelloResponse4();
+        $HelloResponse2 = new  HelloResponse();
         if ($name == "end") {
             $HelloResponse2->setReply('hello end');
             $HelloResponse2->endStreaming = true;
