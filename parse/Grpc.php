@@ -27,7 +27,7 @@ class Grpc extends Http2
         $this->onWriteBody = [$this, "onWriteBody"];
         self::$protocPath = $protocPath;
         self::loadHook();
-        $this->clientStreamUrl = array_merge(self::$streaming["client_streaming"], self::$streaming["double_streaming"]);
+        $this->clientStreamUrl = array_merge(self::$streaming["client_streaming"] ?? [], self::$streaming["double_streaming"] ?? []);
     }
 
     public static function pack(string $data): string
@@ -163,6 +163,11 @@ class Grpc extends Http2
             $file = "{$path_info['dirname']}/{$path_info['filename']}";
             $file = str_replace("/", "\\", $file);
             $file = substr($file, strlen($base_path));
+
+            //var_dump(property_exists(\proto\pb\GreeterService::class, 'Streaming'));
+            var_dump(class_exists(\proto\pb\GreeterService::class));
+
+            //var_dump(property_exists($file, 'Streaming'), property_exists($file, 'Route'), property_exists($file, 'Parameter'));
             if (property_exists($file, 'Streaming') and property_exists($file, 'Route') and property_exists($file, 'Parameter')) {
                 self::$streaming = array_merge(self::$streaming, $file::$Streaming);
                 self::$route = array_merge(self::$route, $file::$Route);
