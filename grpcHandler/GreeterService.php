@@ -38,7 +38,6 @@ class GreeterService
 
     public const NAME = "pb.Greeter";
 
-
     /**
      *此处实现自己的业务逻辑
      * Simple
@@ -108,15 +107,5 @@ class GreeterService
                 yield $HelloResponse2;
             }
         }
-
-
-//        $HelloResponse4 = new  HelloResponse4();
-//        for ($i = 0; $i < 5; $i++) {
-//            $HelloResponse4->setReply('hello' . $i);
-//            return $HelloResponse4;
-//        }
-//        $HelloResponse4->endStreaming = true;
-
     }
-
 }

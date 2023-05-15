@@ -6,54 +6,24 @@ package pb;
 
 // 包名
 option go_package = "hello_client/pb";
+option php_namespace = "proto\\pb";
+option php_metadata_namespace = "proto\\metadata";
 
 // 定义服务
 service Greeter {
   // SayHello 方法
-  rpc SayHello (HelloRequest1) returns (HelloResponse1) {}
-  rpc ClientSayHello (stream HelloRequest2) returns (HelloResponse2) {}
-  rpc ServerSayHello (HelloRequest3) returns (stream HelloResponse3) {}
-  rpc DoubleSayHello (stream HelloRequest4) returns (stream HelloResponse4) {}
+  rpc SayHello (HelloRequest) returns (HelloResponse) {}
+  rpc ClientSayHello (stream HelloRequest) returns (HelloResponse) {}
+  rpc ServerSayHello (HelloRequest) returns (stream HelloResponse) {}
+  rpc DoubleSayHello (stream HelloRequest) returns (stream HelloResponse) {}
 }
-
-/*@property bool $end*/
-message HelloRequest1 {
-  string name = 1;
-}
-
-// 响应消息
-message HelloResponse1 {
-  string reply = 1;
-}
-
 
 // 请求消息
-message HelloRequest2 {
-  string name = 1;
-}
-// 响应消息
-message HelloResponse2 {
-  string reply = 1;
-}
-
-
-// 请求消息
-message HelloRequest3 {
+message HelloRequest {
   string name = 1;
 }
 
 // 响应消息
-message HelloResponse3 {
-  string reply = 1;
-}
-
-
-// 请求消息
-message HelloRequest4{
-  string name = 1;
-}
-
-// 响应消息
-message HelloResponse4 {
+message HelloResponse {
   string reply = 1;
 }
