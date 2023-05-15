@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+// 版本声明，使用Protocol Buffers v3版本
+
+package pb;
+
+// 包名
+option go_package = "hello_client/pb";
+
+// 定义服务
+service Greeter {
+  // SayHello 方法
+  rpc SayHello (HelloRequest1) returns (HelloResponse1) {}
+  rpc ClientSayHello (stream HelloRequest2) returns (HelloResponse2) {}
+  rpc ServerSayHello (HelloRequest3) returns (stream HelloResponse3) {}
+  rpc DoubleSayHello (stream HelloRequest4) returns (stream HelloResponse4) {}
+}
+
+/*@property bool $end*/
+message HelloRequest1 {
+  string name = 1;
+}
+
+// 响应消息
+message HelloResponse1 {
+  string reply = 1;
+}
+
+
+// 请求消息
+message HelloRequest2 {
+  string name = 1;
+}
+// 响应消息
+message HelloResponse2 {
+  string reply = 1;
+}
+
+
+// 请求消息
+message HelloRequest3 {
+  string name = 1;
+}
+
+// 响应消息
+message HelloResponse3 {
+  string reply = 1;
+}
+
+
+// 请求消息
+message HelloRequest4{
+  string name = 1;
+}
+
+// 响应消息
+message HelloResponse4 {
+  string reply = 1;
+}

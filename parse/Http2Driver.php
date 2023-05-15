@@ -218,19 +218,23 @@ final class Http2Driver
      */
     private function shutdown(?int $lastId = null, ?\Throwable $reason = null)
     {
-        
-            $code = $reason ? $reason->getCode() : Http2Parser::GRACEFUL_SHUTDOWN;
-            $lastId = $lastId ?? ($id ?? 0);
-            $this->writeFrame(\pack("NN", $lastId, $code), Http2Parser::GOAWAY, Http2Parser::NO_FLAG);
-        
-            if (!empty($this->streams)) {
+
+        $code = $reason ? $reason->getCode() : Http2Parser::GRACEFUL_SHUTDOWN;
+        $lastId = $lastId ?? ($id ?? 0);
+        $this->writeFrame(\pack("NN", $lastId, $code), Http2Parser::GOAWAY, Http2Parser::NO_FLAG);
+
+        if (!empty($this->streams)) {
+            if (empty($reason)) {
+                $exception = new ClientException("", 0, $reason);
+            } else {
                 $exception = new ClientException($reason->getMessage(), $reason->getCode(), $reason);
-                foreach ($this->streams as $id => $stream) {
-                    $this->releaseStream($id, $exception);
-                }
             }
-            $this->http2Connect->close();
-        
+            foreach ($this->streams as $id => $stream) {
+                $this->releaseStream($id, $exception);
+            }
+        }
+        $this->http2Connect->close();
+
     }
 
     //推送请求
@@ -553,7 +557,12 @@ final class Http2Driver
         if (in_array($request->path(), $this->clientStreamUrl)) {
             // 客户端流模式在此处不停的发送帧  需要先把头信息发送回去再发送data帧
             // $this->streams[$streamId]
-            if (is_callable($this->onStreamData)) ($this->onStreamData)($this->streams[$streamId], $data);
+            if (is_callable($this->onStreamData)) {
+                if (($this->onStreamData)($request, $this->streams[$streamId], $data) === false) {
+                    //如果服务端模式。服务端准备关闭流，就假设这是最后一个流
+                    $this->handleStreamEnd($streamId);
+                }
+            }
         } else {
             $request->appendData($data);
         }

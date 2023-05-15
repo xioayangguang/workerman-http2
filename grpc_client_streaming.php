@@ -29,7 +29,7 @@ $http2->setClientStreamUrl([
 //Grpc双向流模式 onStreamData + onRequest
 
 //只在grpc客户端流模式 和双向流模式下生效 每次有帧数据过来的时候 此时还没生成response对象
-$http2->onStreamData = function (Http2Stream $stream, string $data) {
+$http2->onStreamData = function (Request $request, Http2Stream $stream, string $data) {
     static $_body = "";
     $_body .= $data;
     if (strlen($_body) < 5) return;
@@ -39,11 +39,13 @@ $http2->onStreamData = function (Http2Stream $stream, string $data) {
     $obj->mergeFromString(substr($_body, 5, $data["leng"]));
     $_body = substr($_body, 5 + $data["leng"]);
     var_dump($obj->getName());
-    $response_message = new HelloResponse();
-    $response_message->setReply('回复客户端：' . $obj->getName());
-    $data = $response_message->serializeToString();
-    $data = pack('CN', 0, strlen($data)) . $data;
-    $stream->sendStream($data);
+    //下面这些信息不能回复，当前模式只能接收客户端信息
+//    $response_message = new HelloResponse();
+//    $response_message->setReply('回复客户端：' . $obj->getName());
+//    $data = $response_message->serializeToString();
+//    $data = pack('CN', 0, strlen($data)) . $data;
+//    $stream->sendStream($data);
+    return false;
 };
 
 //收到了完整的请求 有end_Stream才会调此函数  处理grpc简单模式
@@ -53,7 +55,7 @@ $http2->onRequest = function (Request $request) {
     $obj = new HelloRequest();
     $obj->mergeFromString($data);
     $response_message = new HelloResponse();
-    $response_message->setReply('Hello ' . $obj->getName());
+    $response_message->setReply('Hello1 ' . $obj->getName());
     $data = $response_message->serializeToString();
     $data = pack('CN', 0, strlen($data)) . $data;
     $response = new Response(200, [
@@ -63,7 +65,6 @@ $http2->onRequest = function (Request $request) {
     $response->setTrailers(["grpc-status" => "0", "grpc-message" => ""]);
     return $response;
 };
-if(!defined('GLOBAL_START'))
-{
+if (!defined('GLOBAL_START')) {
     Http2::runAll();
 }

@@ -25,8 +25,10 @@ $http2->onRequest = function (Request $request) {
     $data = substr($data, 5);
     $obj = new HelloRequest();
     $obj->mergeFromString($data);
+
     $response_message = new HelloResponse();
     $response_message->setReply('Hello ' . $obj->getName());
+
     $data = $response_message->serializeToString();
     $data = pack('CN', 0, strlen($data)) . $data;
     $response = new Response(200, [

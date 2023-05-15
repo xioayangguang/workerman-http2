@@ -31,7 +31,7 @@ class Http2 extends Worker
     /**
      * @var array
      */
-    private $clientStreamUrl;
+    protected $clientStreamUrl;
 
     /**
      * 构造函数
@@ -48,7 +48,8 @@ class Http2 extends Worker
         }
         parent::__construct($socket_name, $context_option);
         $backtrace = debug_backtrace();
-        $this->_autoloadRootPath = dirname($backtrace[0]['file']);
+        $this->_autoloadRootPath = dirname($backtrace[1]['file']);
+        //var_dump($this->_autoloadRootPath);
     }
 
 

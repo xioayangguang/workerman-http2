@@ -25,6 +25,7 @@
   },
   "autoload": {
     "psr-4": {
+      "grpcHandler\\": "grpcHandler",
       "parse\\": "parse"
     }
   }

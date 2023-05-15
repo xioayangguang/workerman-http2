@@ -62,13 +62,9 @@ final class Http2Stream
 
     /**
      * @param string $data
-     * @param bool $end 是否是最后一个流
      */
-    public function sendStream(string $data, bool $end = false)
+    public function sendStream(string $data)
     {
-        if ($end) {
-            $this->state |= Http2Stream::LOCAL_CLOSED;
-        }
         $this->http2Driver->writeData($data, $this->streamId);
     }
 }

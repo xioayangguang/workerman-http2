@@ -49,6 +49,8 @@ $http2->onWriteBody = function (Request $request, Response $response) {
     $response_message = new HelloResponse();
     for ($i = 0; $i < 5; $i++) {
         $response_message->setReply('hahahah'.$i);
+
+
         $data = $response_message->serializeToString();
         $data = pack('CN', 0, strlen($data)) . $data;
         $response->tuckData($data);//在响应流前追加数据

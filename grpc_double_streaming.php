@@ -14,6 +14,8 @@ $http2 = new Http2('ssl://0.0.0.0:448', ['ssl' => [
     'local_cert' => './example/key/draw.jiangtuan.cn_bundle.pem',
     'local_pk' => './example/key/draw.jiangtuan.cn.key',
 ]]);
+
+
 $http2->name = 'Grpc-DoubleStreaming';
 //这个模式下服务端无法一次性获取Body体 (包括客户端流模式和双向流模式)
 //这个模式下收到完整header后回及时返回header
@@ -22,18 +24,20 @@ $http2->setClientStreamUrl([
     "/pb.Greeter/ClientSayHello"
 ]);
 
+
 //Grpc简单模式 onRequest
 //Grpc服务端流模式 onRequest + onWriteBody
 //Grpc客户端流模式 onStreamData + onRequest
 //Grpc双向流模式 onStreamData + onRequest
 
 //只在grpc客户端流模式 和双向流模式下生效 每次有帧数据过来的时候 此时还没生成response对象
-$http2->onStreamData = function (Http2Stream $stream, string $data) {
+$http2->onStreamData = function (Request $request, Http2Stream $stream, string $data) {
     static $_body = "";
     $_body .= $data;
     if (strlen($_body) < 5) return;
     $data = unpack('Cpack/Nleng', substr($_body, 0, 5));
     if (strlen($_body) < 5 + $data["leng"]) return;
+
     $obj = new HelloRequest();
     $obj->mergeFromString(substr($_body, 5, $data["leng"]));
     $_body = substr($_body, 5 + $data["leng"]);
@@ -43,6 +47,7 @@ $http2->onStreamData = function (Http2Stream $stream, string $data) {
     $data = $response_message->serializeToString();
     $data = pack('CN', 0, strlen($data)) . $data;
     $stream->sendStream($data);
+    return false;
 };
 
 //收到了完整的请求 有end_Stream才会调此函数  处理grpc简单模式
@@ -63,7 +68,6 @@ $http2->onRequest = function (Request $request) {
     return $response;
 };
 
-if(!defined('GLOBAL_START'))
-{
+if (!defined('GLOBAL_START')) {
     Http2::runAll();
 }
