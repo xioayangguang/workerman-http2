@@ -1,13 +1,9 @@
 # 基于workerman 实现http2服务端
 
-### 运行http2服务端的方式
+#### 添加host
+  127.0.0.1 xxxxxxxx.cn
 
-* 添加host
-127.0.0.1 xxxxxxxx.cn
-
-
-* 修改证书路径
-
+#### 修改证书路径 (如果是h2需要此步骤)
 ```
 'ssl' => [
      'local_cert' => './draw.xxx.cn_bundle.pem', //修改成自己的路径
@@ -15,22 +11,62 @@
 ]
 ```
 
-运行： 
+####运行
 
 ```
 composer install
+```
 
-php start.php start
-or 
-start.bat  
+```
+php http2_server_h2 start  (常见浏览器只支持此模式)
+```
+或者
 
+```
+composer install
+```
+```
+php http2_server_h2c start    (HTTP1升级http2的方式)
+```
+
+#### 浏览器打开地址查看效果
+  https://xxxx.cn/
+  ![img.png](./example-go-client/pic/img.png)
+
+
+
+# 基于workerman 实现Grpc服务端
+
+#### 编译 workerman的protoc插件
+
+插件地址https://github.com/xioayangguang/workerman_grpc_plugin
+
+放入到系统可执行目录里面
+
+#### 安装依赖
+```
+composer install
+```
+#### 编写自己的proto 并生成php服务端代码
+```
 protoc --php_out=. --workerman_out=. hello.proto
 ```
 
-* 浏览器打开
-https://xxxx.cn/
-![img.png](./example/pic/img.png)
+#### 实现grpc服务端逻辑
+具体可参考 proto/GreeterServiceExample.php
 
-  
-* grpc 运行结果(注意自己的证书路径)
-![img_2.png](./example/pic/img_2.png)
+
+#### 运行服务端
+```
+php grpc.php start  
+```
+#### 运行客户端
+运行golang编写的grpc客户端
+
+```
+cd example-go-client && go run main.go
+or
+cd example-go-client && ./main.exe
+```
+
+![img_2.png](./example-go-client/pic/img_2.png)
