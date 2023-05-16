@@ -1,5 +1,5 @@
 # 基于workerman 实现http2服务端
-
+> 已支持h2， h2c
 #### 添加host
   127.0.0.1 xxxxxxxx.cn
 
@@ -36,7 +36,7 @@ php http2_server_h2c start    (HTTP1升级http2的方式)
 
 
 # 基于workerman 实现Grpc服务端
-
+> 已支持grpc的四种模式
 #### 编译 workerman的protoc插件
 
 插件地址https://github.com/xioayangguang/workerman_grpc_plugin
