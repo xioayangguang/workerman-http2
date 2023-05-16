@@ -8,23 +8,17 @@
     "packages": [
         {
             "name": "google/protobuf",
-            "version": "v3.22.3",
+            "version": "v3.23.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/protocolbuffers/protobuf-php.git",
-                "reference": "0edeee0cc2e2991706e16ab60c7d224e5c0241ba"
+                "reference": "20c6a4cc53f98255abaa4b2dc959df8e039f5aba"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/protocolbuffers/protobuf-php/zipball/0edeee0cc2e2991706e16ab60c7d224e5c0241ba",
-                "reference": "0edeee0cc2e2991706e16ab60c7d224e5c0241ba",
-                "shasum": "",
-                "mirrors": [
-                    {
-                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
-                        "preferred": true
-                    }
-                ]
+                "url": "https://api.github.com/repos/protocolbuffers/protobuf-php/zipball/20c6a4cc53f98255abaa4b2dc959df8e039f5aba",
+                "reference": "20c6a4cc53f98255abaa4b2dc959df8e039f5aba",
+                "shasum": ""
             },
             "require": {
                 "php": ">=7.0.0"
@@ -52,9 +46,9 @@
                 "proto"
             ],
             "support": {
-                "source": "https://github.com/protocolbuffers/protobuf-php/tree/v3.22.3"
+                "source": "https://github.com/protocolbuffers/protobuf-php/tree/v3.23.0"
             },
-            "time": "2023-04-12T23:38:34+00:00"
+            "time": "2023-05-08T17:51:47+00:00"
         },
         {
             "name": "workerman/workerman",
@@ -68,13 +62,7 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/walkor/workerman/zipball/e967b79f95b9251a72acb971be05623ec1a51e83",
                 "reference": "e967b79f95b9251a72acb971be05623ec1a51e83",
-                "shasum": "",
-                "mirrors": [
-                    {
-                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
-                        "preferred": true
-                    }
-                ]
+                "shasum": ""
             },
             "require": {
                 "php": ">=7.0"

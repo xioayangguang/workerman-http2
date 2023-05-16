@@ -23,6 +23,8 @@ composer install
 php start.php start
 or 
 start.bat  
+
+protoc --php_out=. --workerman_out=. hello.proto
 ```
 
 * 浏览器打开

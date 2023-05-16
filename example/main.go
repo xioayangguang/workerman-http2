@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 	"grpc/pb"
 	"log"
 	"sync"
@@ -12,12 +12,14 @@ import (
 )
 
 func main() {
-	creds, err0 := credentials.NewClientTLSFromFile("./key/draw.jiangtuan.cn_bundle.pem", "draw.jiangtuan.cn")
-	if err0 != nil {
-		log.Fatal("证书错误: ", err0)
-	}
+	//creds, err0 := credentials.NewClientTLSFromFile("./key/draw.jiangtuan.cn_bundle.pem", "draw.jiangtuan.cn")
+	//if err0 != nil {
+	//	log.Fatal("证书错误: ", err0)
+	//}
 	// 创建连接
-	conn, err := grpc.Dial(":444", grpc.WithTransportCredentials(creds))
+	//conn, err := grpc.Dial(":444", grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(":444", grpc.WithInsecure())
+
 	if err != nil {
 		log.Fatal("服务端连接失败: ", err)
 	}
@@ -26,14 +28,17 @@ func main() {
 
 	//// 简单模式
 	go func() {
-		r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: "xiao yang guang"})
+		md := metadata.Pairs("timestamp", time.Now().Format(time.StampNano))
+		ctx := metadata.NewOutgoingContext(context.Background(), md)
+		r, err := c.SayHello(ctx, &pb.HelloRequest{Name: "xiao yang guang"})
+		//r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: "xiao yang guang"})
 		if err != nil {
 			log.Fatalf("could not greet: %v", err)
 		}
 		log.Printf("Greeting: %s", r.GetReply())
 	}()
-
-	//服务端流模式
+	//
+	////服务端流模式
 	go func() {
 		res, err := c.ServerSayHello(context.Background(), &pb.HelloRequest{Name: "客户端消息"})
 		if err != nil {

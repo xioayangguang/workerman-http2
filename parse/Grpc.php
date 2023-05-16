@@ -9,26 +9,55 @@ use RecursiveIteratorIterator;
 class Grpc extends Http2
 {
 
-    private static $_body = "";
-    private static $streaming = [];
-    private static $route = [];
-    private static $Parameter = [];
     /**
      * @var string
      */
-    public static $protocPath = "";
+    private static $body = "";
+    /**
+     * @var array[]
+     */
+    private static $streaming = [
+        "client_streaming" => [],
+        "double_streaming" => [],
+        "server_streaming" => [],
+        "simple" => [],
+    ];
+    /**
+     * @var array
+     */
+    private static $route = [];
+    /**
+     * @var array
+     */
+    private static $parameter = [];
+
+    /**
+     * @var string
+     */
+    private static $protocPath = "";
 
 
+    /**
+     * @throws \Exception
+     */
     public function __construct($socket_name, $protocPath, array $context_option = [])
     {
         parent::__construct($socket_name, $context_option);
+        $backtrace = debug_backtrace();
+        $this->_autoloadRootPath = dirname($backtrace[0]['file']);
         $this->onStreamData = [$this, "onStreamData"];
         $this->onRequest = [$this, "onRequest"];
         $this->onWriteBody = [$this, "onWriteBody"];
         self::$protocPath = $protocPath;
+    }
+
+    public function run(): void
+    {
+        parent::run();
         self::loadHook();
         $this->clientStreamUrl = array_merge(self::$streaming["client_streaming"] ?? [], self::$streaming["double_streaming"] ?? []);
     }
+
 
     public static function pack(string $data): string
     {
@@ -38,12 +67,12 @@ class Grpc extends Http2
 
     public static function unpack(string $data): string
     {
-        self::$_body .= $data;
-        if (strlen(self::$_body) < 5) return "";
-        $data = unpack('Cpack/Nleng', substr(self::$_body, 0, 5));
-        if (strlen(self::$_body) < 5 + $data["leng"]) return "";
-        $grpcData = substr(self::$_body, 5, $data["leng"]);
-        self::$_body = substr(self::$_body, 5 + $data["leng"]);
+        self::$body .= $data;
+        if (strlen(self::$body) < 5) return "";
+        $data = unpack('Cpack/Nleng', substr(self::$body, 0, 5));
+        if (strlen(self::$body) < 5 + $data["leng"]) return "";
+        $grpcData = substr(self::$body, 5, $data["leng"]);
+        self::$body = substr(self::$body, 5 + $data["leng"]);
         return $grpcData;
     }
 
@@ -53,7 +82,7 @@ class Grpc extends Http2
         $data = self::unpack($data);
         if (!empty($data)) {
             if (is_callable(self::$route[$request->path()])) {
-                $obj = new self::$Parameter[$request->path()];
+                $obj = new self::$parameter[$request->path()];
                 $obj->mergeFromString($data);
                 $obj->metadata = $request->getHeaders();
                 $response_message = (self::$route[$request->path()])($obj);
@@ -92,7 +121,7 @@ class Grpc extends Http2
             $data = self::unpack($request->rawBody());
             if (!empty($data)) {
                 if (is_callable(self::$route[$request->path()])) {
-                    $obj = new  self::$Parameter[$request->path()];
+                    $obj = new  self::$parameter[$request->path()];
                     $obj->metadata = $request->getHeaders();
                     $obj->mergeFromString($data);
                     $response_message = (self::$route[$request->path()])($obj);
@@ -118,7 +147,7 @@ class Grpc extends Http2
     {
         if (in_array($request->path(), self::$streaming["server_streaming"])) {
             if (is_callable(self::$route[$request->path()])) {
-                $obj = new self::$Parameter[$request->path()];
+                $obj = new self::$parameter[$request->path()];
                 $obj->metadata = $request->getHeaders();
                 $obj->mergeFromString(self::unpack($request->rawBody()));
                 $generator = (self::$route[$request->path()])($obj);
@@ -146,7 +175,7 @@ class Grpc extends Http2
 
     /**
      * 扫描文件
-     * @return array
+     * @throws \Exception
      */
     public static function loadHook()
     {
@@ -163,15 +192,11 @@ class Grpc extends Http2
             $file = "{$path_info['dirname']}/{$path_info['filename']}";
             $file = str_replace("/", "\\", $file);
             $file = substr($file, strlen($base_path));
-
-            //var_dump(property_exists(\proto\pb\GreeterService::class, 'Streaming'));
-            var_dump(class_exists(\proto\pb\GreeterService::class));
-
-            //var_dump(property_exists($file, 'Streaming'), property_exists($file, 'Route'), property_exists($file, 'Parameter'));
             if (property_exists($file, 'Streaming') and property_exists($file, 'Route') and property_exists($file, 'Parameter')) {
+                //todo 验证二维数组合并会不会出问题
                 self::$streaming = array_merge(self::$streaming, $file::$Streaming);
                 self::$route = array_merge(self::$route, $file::$Route);
-                self::$Parameter = array_merge(self::$Parameter, $file::$Parameter);
+                self::$parameter = array_merge(self::$parameter, $file::$Parameter);
             }
         }
     }

@@ -48,7 +48,7 @@ class Http2 extends Worker
         }
         parent::__construct($socket_name, $context_option);
         $backtrace = debug_backtrace();
-        $this->_autoloadRootPath = dirname($backtrace[1]['file']);
+        $this->_autoloadRootPath = dirname($backtrace[0]['file']);
     }
 
 

@@ -2,9 +2,11 @@
 declare(strict_types=1);
 # source: hello.proto
 
-namespace grpcHandler;
+namespace proto;
 
 
+use Generator;
+use proto\pb\GreeterService;
 use proto\pb\HelloRequest;
 use proto\pb\HelloResponse;
 
@@ -18,10 +20,10 @@ class GreeterServiceExample
     ];
 
     public static $Route = [
-        "/pb.Greeter/SayHello" => [GreeterServiceExample::class, "SayHello"],
-        "/pb.Greeter/ClientSayHello" => [GreeterServiceExample::class, "ClientSayHello"],
-        "/pb.Greeter/ServerSayHello" => [GreeterServiceExample::class, "ServerSayHello"],
-        "/pb.Greeter/DoubleSayHello" => [GreeterServiceExample::class, "DoubleSayHello"],
+        "/pb.Greeter/SayHello" => [GreeterService::class, "SayHello"],
+        "/pb.Greeter/ClientSayHello" => [GreeterService::class, "ClientSayHello"],
+        "/pb.Greeter/ServerSayHello" => [GreeterService::class, "ServerSayHello"],
+        "/pb.Greeter/DoubleSayHello" => [GreeterService::class, "DoubleSayHello"],
     ];
 
     public static $Parameter = [
@@ -41,6 +43,7 @@ class GreeterServiceExample
      */
     public static function SayHello(HelloRequest $request): HelloResponse
     {
+        //var_dump($request->metadata);
         $response_message = new HelloResponse();
         $response_message->setReply('Hello ' . $request->getName());
         return $response_message;
@@ -59,21 +62,20 @@ class GreeterServiceExample
             $HelloResponse2->setReply('helloEnd');
             return $HelloResponse2;
         } else {
-            var_dump($name);
+            echo $name . "\r\n";;
         }
         return null;
     }
 
 
     /**
-     *此处实现自己的业务逻辑
-     * ServerStreaming
      * @param HelloRequest $request
+     * @return Generator
      */
-    public static function ServerSayHello(HelloRequest $request): \Generator
+    public static function ServerSayHello(HelloRequest $request): Generator
     {
         $name = $request->getName();
-        var_dump($name);
+        echo $name . "\r\n";
         $HelloResponse3 = new HelloResponse();
         for ($i = 0; $i < 3; $i++) {
             $HelloResponse3->setReply('hello' . $i);
@@ -83,14 +85,14 @@ class GreeterServiceExample
 
 
     /**
-     *此处实现自己的业务逻辑
+     * 此处实现自己的业务逻辑
      * DoubleStreaming  如需要结束流则设置  $HelloResponse4->endStreaming = true;
      * @param HelloRequest $request
      */
-    public static function DoubleSayHello(HelloRequest $request): \Generator
+    public static function DoubleSayHello(HelloRequest $request): Generator
     {
         $name = $request->getName();
-        var_dump($name);
+        echo $name . "\r\n";
         $HelloResponse2 = new  HelloResponse();
         if ($name == "end") {
             $HelloResponse2->setReply('hello end');
