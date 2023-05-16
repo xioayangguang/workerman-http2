@@ -39,9 +39,11 @@ php http2_server_h2c start    (HTTP1升级http2的方式)
 > 已支持grpc的四种模式
 #### 编译 workerman的protoc插件
 
+下载protoc插件并放入系统Path目录里面
+
 插件地址https://github.com/xioayangguang/workerman_grpc_plugin
 
-放入到系统可执行目录里面
+编译后放入到系统Path目录里面
 
 #### 安装依赖
 ```
