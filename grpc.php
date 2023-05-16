@@ -5,9 +5,9 @@ use parse\Grpc;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-//$grpc = new Grpc('ssl://0.0.0.0:444', "proto/pb", ['ssl' => [
-//    'local_cert' => './example/key/draw.jiangtuan.cn_bundle.pem',
-//    'local_pk' => './example/key/draw.jiangtuan.cn.key',
+//$grpc = new Grpc('ssl://0.0.0.0:44', "proto/pb", ['ssl' => [
+//    'local_cert' => './example-go-client/key/draw.jiangtuan.cn_bundle.pem',
+//    'local_pk' => './example-go-client/key/draw.jiangtuan.cn.key',
 //]]);
 
 $grpc = new Grpc('tcp://0.0.0.0:444', "proto/pb");

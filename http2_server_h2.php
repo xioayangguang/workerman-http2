@@ -8,8 +8,8 @@ use parse\Response;
 require_once __DIR__ . '/vendor/autoload.php';
 
 $h2 = new Http2('ssl://0.0.0.0:443', ['ssl' => [
-    'local_cert' => './example/key/draw.jiangtuan.cn_bundle.pem',
-    'local_pk' => './example/key/draw.jiangtuan.cn.key',
+    'local_cert' => './example-go-client/key/draw.jiangtuan.cn_bundle.pem',
+    'local_pk' => './example-go-client/key/draw.jiangtuan.cn.key',
 ]]);
 $h2->name = 'Http2-h2';
 $h2->onRequest = function (Request $request) {
