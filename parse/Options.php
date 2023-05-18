@@ -44,9 +44,4 @@ final class Options
     {
         return "./log/http2.log";
     }
-
-    public static function doubleStream(): bool
-    {
-        return true;
-    }
 }

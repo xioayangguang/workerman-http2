@@ -484,11 +484,11 @@ final class Http2Driver
             $query = \substr($target, $position + 1);
             $target = \substr($target, 0, $position);
         }
-        try {
-            $headers = array_merge($headers, ["scheme" => $scheme, "host" => $host, "port" => $port, "path" => $target, "query" => $query, "method" => $method]);
-        } catch (\Exception $exception) {
-            throw new Http2ConnectionException("Invalid request URI", Http2Parser::PROTOCOL_ERROR);
-        }
+        //try {
+        $headers = array_merge($headers, ["scheme" => $scheme, "host" => $host, "port" => $port, "path" => $target, "query" => $query, "method" => $method]);
+        //} catch (\Exception $exception) {
+        //    throw new Http2ConnectionException("Invalid request URI", Http2Parser::PROTOCOL_ERROR);
+        //}
         $this->pinged = 0;
         if ($ended) {  //如果是结束流表示没有请求体
             $request = new Request($streamId, $this->http2Connect, $headers);

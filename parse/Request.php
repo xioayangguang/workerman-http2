@@ -8,12 +8,6 @@ use Workerman\Connection\TcpConnection;
 class Request
 {
     /**
-     * Connection.
-     * @var Http2Connect
-     */
-    protected $_client = null;
-
-    /**
      * @var string
      */
     protected $_body = null;
@@ -60,15 +54,34 @@ class Request
      */
     public function get($name = null, $default = null): array
     {
-        return [];
+        \parse_str($this->_header["query"], $get);
+        if (null === $name) {
+            return $get;
+        }
+        return $get[$name] ?? $default;
     }
 
     /**
      * @param null $name
      * @param null $default
+     * @return array|mixed|string|null
      */
     public function post($name = null, $default = null)
     {
+        $post = [];
+        if ($this->_body === '') {
+            return "";
+        }
+        $content_type = $this->_header['content-type'] ?? "";
+        if (\preg_match('/\bjson\b/i', $content_type)) {
+            return (array)json_decode($this->_body, true);
+        } else {
+            \parse_str($this->_body, $post);
+        }
+        if (null === $name) {
+            return $post;
+        }
+        return $post[$name] ?? $default;
     }
 
     /**
@@ -121,11 +134,13 @@ class Request
     }
 
 
+    /**
+     * @return int
+     */
     public function getStreamId(): int
     {
         return $this->_streamId;
     }
-
 
     /**
      * @return array
@@ -136,11 +151,17 @@ class Request
     }
 
     /**
-     * Parse post.
-     * @return array
+     * Get header item by name.
+     * @param string|null $name
+     * @param mixed|null $default
+     * @return array|string|null
      */
-    protected function parsePost(): array
+    public function header(string $name = null, $default = null)
     {
-        return [];
+        if (null === $name) {
+            return $this->_header;
+        }
+        $name = \strtolower($name);
+        return $this->_header[$name] ?? $default;
     }
 }

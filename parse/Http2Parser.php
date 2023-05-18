@@ -136,7 +136,6 @@ final class Http2Parser
      */
     private $upgradeRequest;
 
-
     /**
      * @param Http2Connect $http2Connect
      * @param Options $options
