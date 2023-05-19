@@ -114,7 +114,7 @@ abstract class Frame
         if (!array_key_exists($type, static::FRAMES)) {
             throw new InvalidFrameException("Invalid Frame Header", Http2Parser::PROTOCOL_ERROR);
         }
-        $frame = '\Frame\\' . static::FRAMES[$type];
+        $frame = '\frame\\' . static::FRAMES[$type];
         $frame = new $frame(['stream_id' => $stream_id, 'length' => $length]);
         $frame->parseFlags($flags);
 
