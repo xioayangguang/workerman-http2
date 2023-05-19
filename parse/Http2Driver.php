@@ -244,7 +244,7 @@ final class Http2Driver
             return;
         }
         $this->pushCache[$url] = $streamId;
-        $headers = \array_merge(\array_intersect_key($request->getHeaders(), self::PUSH_PROMISE_INTERSECT), $headers);
+        $headers = \array_merge(\array_intersect_key($request->header(), self::PUSH_PROMISE_INTERSECT), $headers);
         $id = $this->localStreamId += 2;
         $this->remoteStreamId = \max($id, $this->remoteStreamId);
         $request = new Request($this->http2Connect, "GET", $headers);

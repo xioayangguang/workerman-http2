@@ -84,7 +84,7 @@ class Grpc extends Http2
             if (is_callable(self::$route[$request->path()])) {
                 $obj = new self::$parameter[$request->path()];
                 $obj->mergeFromString($data);
-                $obj->metadata = $request->getHeaders();
+                $obj->metadata = $request->header();
                 $response_message = (self::$route[$request->path()])($obj);
                 if (in_array($request->path(), self::$streaming["client_streaming"])) {
                     if (!empty($response_message)) {
@@ -122,7 +122,7 @@ class Grpc extends Http2
             if (!empty($data)) {
                 if (is_callable(self::$route[$request->path()])) {
                     $obj = new  self::$parameter[$request->path()];
-                    $obj->metadata = $request->getHeaders();
+                    $obj->metadata = $request->header();
                     $obj->mergeFromString($data);
                     $response_message = (self::$route[$request->path()])($obj);
                     $data = $response_message->serializeToString();
@@ -148,7 +148,7 @@ class Grpc extends Http2
         if (in_array($request->path(), self::$streaming["server_streaming"])) {
             if (is_callable(self::$route[$request->path()])) {
                 $obj = new self::$parameter[$request->path()];
-                $obj->metadata = $request->getHeaders();
+                $obj->metadata = $request->header();
                 $obj->mergeFromString(self::unpack($request->rawBody()));
                 $generator = (self::$route[$request->path()])($obj);
                 if ($generator instanceof Iterator) {

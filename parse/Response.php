@@ -70,25 +70,14 @@ class Response
     }
 
     /**
-     * Get header.
-     * @param string $name
-     * @return null|array|string
-     */
-    public function getHeader($name)
-    {
-        if (!isset($this->_header[$name])) {
-            return null;
-        }
-        return $this->_header[$name];
-    }
-
-    /**
      * Get headers.
-     * @return array
      */
-    public function getHeaders(): array
+    public function getHeaders($name = null)
     {
-        return $this->_header;
+        if ($name == null) {
+            return $this->_header;
+        }
+        return $this->_header[$name] ?? "";
     }
 
     public function getStatus(): int
@@ -105,7 +94,6 @@ class Response
     {
         $this->_status = $status;
     }
-
 
     /**
      * 推送 预加载
@@ -144,7 +132,12 @@ class Response
     }
 
 
-    public function withFile($file, $offset = 0, $length = 0)
+    /**
+     * @param $file
+     * @param int $offset
+     * @param int $length
+     */
+    public function withFile($file, int $offset = 0, int $length = 0)
     {
         if (!\is_file($file)) {
             $this->_status = 404;

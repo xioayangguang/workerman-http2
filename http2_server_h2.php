@@ -18,8 +18,7 @@ $h2->onRequest = function (Request $request) {
     //var_dump($request->get());
     //var_dump($request->post());
     //var_dump($request->file());
-    $a = new Response(200, ['A' => 'hello world'], "<h1>hello h2!<h1>");
-    return $a;
+    return new Response(200, ['A' => 'hello world'], "<h1>hello h2!<h1>");
     //return new Response(200, ['content-type' => ['text/html'], 'a' => ['hello world']], file_get_contents("./index.html"));
 };
 

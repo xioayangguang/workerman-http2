@@ -92,7 +92,6 @@ class Request
         return $this->_data['post'][$name] ?? $default;
     }
 
-
     /**
      * @param null $name
      * @return array|mixed|null
@@ -157,7 +156,6 @@ class Request
         return $this->_header["method"];
     }
 
-
     /**
      * @return int
      */
@@ -167,15 +165,6 @@ class Request
     }
 
     /**
-     * @return array
-     */
-    public function getHeaders(): array
-    {
-        return $this->_header;
-    }
-
-    /**
-     * Get header item by name.
      * @param string|null $name
      * @param mixed|null $default
      * @return array|string|null
@@ -188,7 +177,6 @@ class Request
         $name = \strtolower($name);
         return $this->_header[$name] ?? $default;
     }
-
 
     /**
      * 抄的workerman的
