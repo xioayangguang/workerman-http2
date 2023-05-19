@@ -126,17 +126,17 @@ class Grpc extends Http2
                     $obj->mergeFromString($data);
                     $response_message = (self::$route[$request->path()])($obj);
                     $data = $response_message->serializeToString();
-                    $response = new Response(200, ['content-type' => ['application/grpc'],], self::pack($data));
+                    $response = new Response(200, ['content-type' => 'application/grpc'], self::pack($data));
                     $response->setTrailers(["grpc-status" => "0", "grpc-message" => ""]);
                     return $response;
                 } else {
-                    $response = new Response(200, ['content-type' => ['application/grpc']], self::pack(""));
+                    $response = new Response(200, ['content-type' => 'application/grpc'], self::pack(""));
                     $response->setTrailers(["grpc-status" => "5", "grpc-message" => ""]);
                     return $response;
                 }
             }
         } else { //先返回响应普通头
-            $response = new Response(200, ['content-type' => ['application/grpc'],], "");//默认响应成功
+            $response = new Response(200, ['content-type' => 'application/grpc'], "");//默认响应成功
             $response->setTrailers(["grpc-status" => "0", "grpc-message" => ""]);
             return $response;
         }

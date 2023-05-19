@@ -13,7 +13,14 @@ $h2 = new Http2('ssl://0.0.0.0:443', ['ssl' => [
 ]]);
 $h2->name = 'Http2-h2';
 $h2->onRequest = function (Request $request) {
-    return new Response(200, ['content-type' => ['text/html'], 'a' => ['hello world']], "<h1>hello h2!<h1>");
+    //var_dump($request->getMethod());
+    //var_dump($request->path());
+    //var_dump($request->get());
+    //var_dump($request->post());
+    //var_dump($request->file());
+    $a = new Response(200, ['A' => 'hello world'], "<h1>hello h2!<h1>");
+    return $a;
+    //return new Response(200, ['content-type' => ['text/html'], 'a' => ['hello world']], file_get_contents("./index.html"));
 };
 
 Http2::runAll();
