@@ -1,0 +1,1 @@
+document.getElementById("content").innerHTML = '"鹅鹅鹅鹅鹅错" from js'

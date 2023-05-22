@@ -43,6 +43,11 @@ class Response
     public $streamId;
 
     /**
+     * @var array
+     */
+    public $push = [];
+
+    /**
      * Response constructor.
      * @param int $status
      * @param array $headers
@@ -95,22 +100,25 @@ class Response
         $this->_status = $status;
     }
 
+
     /**
      * 推送 预加载
      * @return array
      */
     public function getPushes(): array
     {
-        return [];
-        //return [
-        //    [
-        //        "uri" => "",
-        //        "header" => [],
-        //    ], [
-        //        "uri" => "",
-        //        "header" => [],
-        //    ]
-        //];
+        return $this->push;
+    }
+
+    public function push(string $url, array $header = [])
+    {
+        $urlInfo = parse_url($url);
+        if (is_array($urlInfo)) {
+            $this->push[] = [
+                "uri" => $urlInfo,
+                "header" => $header
+            ];
+        }
     }
 
     /**

@@ -40,13 +40,6 @@ class Http2 extends Worker
      */
     public function __construct($socket_name, array $context_option = [])
     {
-        if (function_exists('opcache_get_status')) {
-            if ($status = opcache_get_status()) {
-                foreach (array_keys($status['scripts']) as $file) {
-                    opcache_invalidate($file, true);
-                }
-            }
-        }
         if (strpos($socket_name, "ssl") === 0) {
             if (!isset($context_option['ssl']["local_cert"], $context_option['ssl']["local_pk"])) {
                 throw new \Exception("Currently only ssl-based handshake is implemented");

@@ -7,7 +7,7 @@ final class Options
 {
     public static function isInDebugMode(): bool
     {
-        return false;
+        return true;
     }
 
     public static function getHttp2Timeout(): int
@@ -37,7 +37,7 @@ final class Options
 
     public static function isPushEnabled(): bool
     {
-        return false;
+        return true;
     }
 
     public static function logFile(): string
