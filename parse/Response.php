@@ -80,7 +80,7 @@ class Response
     public function getHeaders($name = null)
     {
         if ($name == null) {
-            return $this->_header;
+            return $this->_header ?? [];
         }
         return $this->_header[$name] ?? "";
     }
@@ -149,7 +149,8 @@ class Response
     {
         if (!\is_file($file)) {
             $this->_status = 404;
-            $this->_body = "";
+            $this->header("content-type", "text/html");
+            $this->_body = "<h3>404 Not Found</h3>";
             return;
         }
         $file_info = \pathinfo($file);

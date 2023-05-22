@@ -160,16 +160,16 @@ final class Http2Parser
         if (!$this->handsFlag) {
             if (strpos($this->dataBuffer, "HTTP/1.")) {  //初略判断http1 //h2c升级握手升级部分
                 if ($connection->transport == "ssl") {
-                    $this->http2Connect->connection->close("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json;\r\ncharset=utf-8\r\nContent-Length: 20\r\n\r\n目前未兼容http1");
+                    $this->http2Connect->connection->send("HTTP/1.1 400 Bad Request\r\nContent-Type: text/html;\r\ncharset=utf-8\r\nContent-Length: 19\r\n\r\nnot support http1.x");
                     return;
                 }
                 $header_end_pos = \strpos($this->dataBuffer, "\r\n\r\n");
                 if (!$header_end_pos) {
-                    $this->http2Connect->connection->close("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json;\r\ncharset=utf-8\r\nContent-Length: 20\r\n\r\n目前未兼容http1");
+                    $this->http2Connect->connection->send("HTTP/1.1 400 Bad Request\r\nContent-Type: text/html;\r\ncharset=utf-8\r\nContent-Length: 19\r\n\r\nnot support http1.x");
                     return;
                 }
                 if (!\preg_match("/HTTP2-Settings: *(.*?)\r\n/i", $this->dataBuffer, $match)) {
-                    $this->http2Connect->connection->close("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json;\r\ncharset=utf-8\r\nContent-Length: 20\r\n\r\n目前未兼容http1");
+                    $this->http2Connect->connection->send("HTTP/1.1 400 Bad Request\r\nContent-Type: text/html;\r\ncharset=utf-8\r\nContent-Length: 19\r\n\r\nnot support http1.x");
                     return;
                 }
                 $f = new SettingsFrame();
@@ -526,6 +526,6 @@ final class Http2Parser
 
     public function onClose()
     {
-        $this->handler->stop();
+//        $this->handler->stop();
     }
 }

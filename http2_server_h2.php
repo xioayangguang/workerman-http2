@@ -22,16 +22,16 @@ $h2->onRequest = function (Request $request) {
     //return new Response(200, ['content-type' => ['text/html'], 'a' => ['hello world']], file_get_contents("./static/index.html"));
     $path = $request->path();
     if ($path === '/') {
-        $response = new Response(200, ["content-type" => "text/html; charset=utf-8"], file_get_contents("./static/push.html"));
+        $response = new Response(200, ["content-type" => "text/html; charset=utf-8"], file_get_contents("./static/html/index.html"));
         $response->push("/static/app.js");
         $response->push("/static/style.css", ["c" => "c"]);
         return $response;
     }
-    if (substr($path, 0, 7) == "/static") {
+//    if (substr($path, 0, 7) == "/html") {
         $response = new Response(200);
-        $response->withFile("." . $path);
+        $response->withFile("./static/html" . $path);
         return $response;
-    }
+//    }
 };
 
 Http2::runAll();
