@@ -27,12 +27,11 @@ $h2->onRequest = function (Request $request) {
         $response->push("/static/style.css", ["c" => "c"]);
         return $response;
     }
-//    if (substr($path, 0, 7) == "/html") {
-        $response = new Response(200);
-        $response->withFile("./static/html" . $path);
-        return $response;
-//    }
+    //if (substr($path, 0, 7) == "/html") {
+    $response = new Response(200);
+    $response->withFile("./static/html" . $path);
+    return $response;
+    // }
 };
 
 Http2::runAll();
-

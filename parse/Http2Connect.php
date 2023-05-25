@@ -12,7 +12,7 @@ class Http2Connect
      */
     public $connection;
 
-    private $expirationTime;
+    private $expirationTime = 0;
 
     public function __construct(TcpConnection $connection)
     {

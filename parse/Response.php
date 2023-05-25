@@ -180,7 +180,23 @@ class Response
         }
         if ($body_len < 2 * 1024 * 1024) {
             $this->_body = file_get_contents($file, false, null, $offset, $body_len);
+            return;
         }
+//        $this->_body = function (){
+//            $a = $body_len / 1048576;
+//            $a = ceil($a);
+//            var_dump($a);
+//            for ($i = 0; $i < $a; $i++) {
+//                $f = $offset + 1048576 * $i;
+//                $len = min(1048576, $body_len - 1048576 * $i);
+//                if ($len < 1048576) {
+//                    $this->_body = file_get_contents($file, false, null, $f, $body_len);
+//                } else {
+//                    $this->tuckData(file_get_contents($file, false, null, $f, min(1048576, $len)));
+//                }
+//                echo $f, "---", $body_len . "\r\n";
+//            }
+//        };
     }
 
     /**
@@ -190,6 +206,7 @@ class Response
     public function tuckData(string $data)
     {
         if ($this->http2Driver instanceof Http2Driver) {
+            var_dump(111);
             $this->http2Driver->writeData($data, $this->streamId);
         }
     }
