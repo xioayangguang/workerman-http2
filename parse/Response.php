@@ -206,7 +206,6 @@ class Response
     public function tuckData(string $data)
     {
         if ($this->http2Driver instanceof Http2Driver) {
-            var_dump(111);
             $this->http2Driver->writeData($data, $this->streamId);
         }
     }

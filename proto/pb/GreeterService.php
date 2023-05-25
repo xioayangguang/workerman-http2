@@ -109,12 +109,10 @@ class GreeterService
             $HelloResponse2->endStreaming = true;
             yield $HelloResponse2;
         } else {
-            for ($i = 0; $i < 5; $i++) {
+            for ($i = 0; $i < 2; $i++) {
                 $HelloResponse2->setReply('hello' . $i);
                 yield $HelloResponse2;
             }
         }
 	}
-		
-	
 }

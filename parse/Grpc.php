@@ -136,7 +136,8 @@ class Grpc extends Http2
                 }
             }
         } else { //先返回响应普通头
-            $response = new Response(200, ['content-type' => 'application/grpc'], "");//默认响应成功
+            //最后都会多一个空消息
+            $response = new Response(200, ['content-type' => 'application/grpc'], self::pack("")); //默认响应成功
             $response->setTrailers(["grpc-status" => "0", "grpc-message" => ""]);
             return $response;
         }
