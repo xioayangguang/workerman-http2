@@ -86,30 +86,32 @@ class Grpc extends Http2
                 $obj = new self::$parameter[$request->path()];
                 $obj->mergeFromString($data);
                 $obj->metadata = $request->header();
-                $response_message = (self::$route[$request->path()])($obj);
+                $responseMessage = (self::$route[$request->path()])($obj);
                 if (in_array($request->path(), self::$streaming["client_streaming"])) {
-                    if (!empty($response_message)) {
-                        $data = $response_message->serializeToString();
-                        $response->tuckData(self::pack($data));
+                    if (!empty($responseMessage)) {
+                        //todo 如果客户端主动关闭客户端收不到任何数据客户端会报错
+                        $data = $responseMessage->serializeToString();
+                        $response->setBody(self::pack($data));
                         return false;
                     }
                 }
                 if (in_array($request->path(), self::$streaming["double_streaming"])) {
-                    $generator = $response_message;
+                    $generator = $responseMessage;
                     if ($generator instanceof Iterator) {
-                        foreach ($generator as $response_message) {
-                            $data = $response_message->serializeToString();
+                        foreach ($generator as $responseMessage) {
+                            $data = $responseMessage->serializeToString();
                             $response->tuckData(self::pack($data));   //在响应流前追加数据
                         }
                     } else {//终止流
+                        $response->setTrailers(["grpc-status" => 14]);
                         return false;
                     }
-                    if (isset($response_message->endStreaming) and $response_message->endStreaming === true) {//终止流
+                    if (isset($responseMessage->endStreaming) and $responseMessage->endStreaming === true) {//终止流
+                        $response->setBody();
                         return false;
                     }
                 }
             } else {//这里不传入end  如果是结束直接传Response对象
-                $response->tuckData(self::pack("404"));
                 $response->setTrailers(["grpc-status" => 5]);
                 return false;
             }
@@ -127,8 +129,8 @@ class Grpc extends Http2
                     $obj = new  self::$parameter[$request->path()];
                     $obj->metadata = $request->header();
                     $obj->mergeFromString($data);
-                    $response_message = (self::$route[$request->path()])($obj);
-                    $data = $response_message->serializeToString();
+                    $responseMessage = (self::$route[$request->path()])($obj);
+                    $data = $responseMessage->serializeToString();
                     $response = new Response(200, ['content-type' => 'application/grpc'], self::pack($data));
                     $response->setTrailers(["grpc-status" => "0", "grpc-message" => ""]);
                     return $response;
@@ -138,8 +140,8 @@ class Grpc extends Http2
                     return $response;
                 }
             }
-        } else { //先返回响应普通头
-            $response = new Response(200, ['content-type' => 'application/grpc'], self::pack("")); //默认响应成功
+        } else {
+            $response = new Response(200, ['content-type' => 'application/grpc'], self::pack(""));
             $response->setTrailers(["grpc-status" => "0", "grpc-message" => ""]);
             return $response;
         }
@@ -156,15 +158,16 @@ class Grpc extends Http2
                     $obj->mergeFromString(self::unpack($request->rawBody()));
                     $generator = (self::$route[$request->path()])($obj);
                     if ($generator instanceof Iterator) {
-                        foreach ($generator as $response_message) {
-                            $data = $response_message->serializeToString();
+                        foreach ($generator as $responseMessage) {
+                            $data = $responseMessage->serializeToString();
                             $response->tuckData(self::pack($data));   //在响应流前追加数据
                         }
                     }
                 }
             } catch (\Exception $exception) {
-                $response->tuckData(self::pack(""));
                 $response->setTrailers(["grpc-status" => "14", "grpc-message" => $exception->getMessage()]);
+            } finally {
+                $response->setBody();
             }
         }
     }

@@ -95,6 +95,11 @@ class Response
         return $this->_body;
     }
 
+    public function setBody($body = "")
+    {
+        return $this->_body = $body;
+    }
+
     public function setStatus($status)
     {
         $this->_status = $status;

@@ -40,7 +40,7 @@ final class Http2Stream
 
     /** 预期还需要接收的长度 @var int|null */
     public $expectedLength;
-    
+
     public function __construct( int $serverSize, int $clientSize, int $state = self::OPEN)
     {
         $this->serverWindow = $serverSize;

@@ -188,7 +188,6 @@ final class Http2Driver
 
     public function sendBody(int $id, Response $response, Request $request)
     {
-        $trailers = $response->getTrailers();
         if (!in_array($request->path(), $this->clientStreamUrl)) {
             if (is_callable($this->onWriteBody)) {
                 //服务端流模式在此处不停的发送帧
@@ -198,10 +197,13 @@ final class Http2Driver
             }
         }
         $body = $response->getBody();
-        $this->writeData($body, $id);
+        if (strlen($body)) {
+            $this->writeData($body, $id);
+        }
         if (!isset($this->streams[$id])) {
             return;
         }
+        $trailers = $response->getTrailers();
         if ($trailers) {
             $this->streams[$id]->state |= Http2Stream::LOCAL_CLOSED;
             $headers = $this->encodeHeaders($trailers);
@@ -249,7 +251,7 @@ final class Http2Driver
         //$this->remoteStreamId = \max($id, $this->remoteStreamId);
         $headers = array_merge(["scheme" => "https", "host" => "", "port" => 443, "path" => "/", "query" => "", "method" => "GET"], $push["uri"], $pushHseaders);
         $request = new Request($this->http2Connect, $this->http2Connect, $headers);
-        $this->streams[$id] = new Http2Stream( 0, $this->initialWindowSize, Http2Stream::RESERVED | Http2Stream::REMOTE_CLOSED);
+        $this->streams[$id] = new Http2Stream(0, $this->initialWindowSize, Http2Stream::RESERVED | Http2Stream::REMOTE_CLOSED);
         $this->streamIdRequestMap[$id] = $request;
         foreach ($pushHseaders as $k => $v) {
             if (is_scalar($v)) $pushHseaders[$k] = [$v];
@@ -461,7 +463,7 @@ final class Http2Driver
             if (!($streamId & 1) || $this->remainingStreams-- <= 0 || $streamId <= $this->remoteStreamId) {
                 throw new Http2ConnectionException("Invalid stream ID $streamId", Http2Parser::PROTOCOL_ERROR);
             }
-            $stream = $this->streams[$streamId] = new Http2Stream( Options::getBodySizeLimit(), $this->initialWindowSize);
+            $stream = $this->streams[$streamId] = new Http2Stream(Options::getBodySizeLimit(), $this->initialWindowSize);
         }
         $this->remoteStreamId = \max($streamId, $this->remoteStreamId);
         $this->http2Connect->updateExpirationTime(\time() + Options::getHttp2Timeout());
@@ -649,7 +651,7 @@ final class Http2Driver
             if ($streamId <= $this->remoteStreamId) {//此帧可能在处理完成或帧发送完成后到达，这会导致它对已识别的流没有任何影响
                 return;
             }
-            $this->streams[$streamId] = new Http2Stream( Options::getBodySizeLimit(), $this->initialWindowSize);
+            $this->streams[$streamId] = new Http2Stream(Options::getBodySizeLimit(), $this->initialWindowSize);
         }
         $stream = $this->streams[$streamId];
         $stream->dependency = $parentId;
