@@ -37,7 +37,7 @@ func main() {
 		}
 		log.Printf("Greeting: %s", r.GetReply())
 	}()
-	//
+
 	////服务端流模式
 	go func() {
 		res, err := c.ServerSayHello(context.Background(), &pb.HelloRequest{Name: "客户端消息"})
@@ -64,7 +64,14 @@ func main() {
 				Name: fmt.Sprintf("客户端流数据 %d", i),
 			})
 			time.Sleep(time.Second)
-			if i > 10000 {
+			//if i > 10 {
+			//	_ = putS.Send(&pb.HelloRequest{
+			//		Name: "end",
+			//	})
+			//	break
+			//}
+			if i > 10 {
+				_ = putS.CloseSend()
 				break
 			}
 		}
@@ -82,8 +89,9 @@ func main() {
 				data, err := allStr.Recv()
 				if err != nil {
 					fmt.Println(err)
+				} else {
+					fmt.Println("收到服务端消息：" + data.Reply)
 				}
-				fmt.Println("收到客户端消息：" + data.Reply)
 			}
 		}()
 		// 不停的发送数据
@@ -94,6 +102,10 @@ func main() {
 				i++
 				_ = allStr.Send(&pb.HelloRequest{Name: fmt.Sprintf("客户端数据流%v", i)})
 				time.Sleep(time.Second * 1)
+				if i > 10 {
+					_ = allStr.Send(&pb.HelloRequest{Name: "end"})
+					break
+				}
 			}
 		}()
 		wg.Wait()

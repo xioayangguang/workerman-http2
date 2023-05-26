@@ -68,7 +68,10 @@ final class Http2Driver
     private $remainingStreams;
 
     /** @var int[] */
-    private $streamIdMap = [];
+    private $streamIdRequestMap = [];
+
+    /** @var int[] */
+    private $streamIdResponseMap = [];
 
     /** @var int  客户端ping服务端的次数 */
     private $pinged = 0;
@@ -246,8 +249,8 @@ final class Http2Driver
         //$this->remoteStreamId = \max($id, $this->remoteStreamId);
         $headers = array_merge(["scheme" => "https", "host" => "", "port" => 443, "path" => "/", "query" => "", "method" => "GET"], $push["uri"], $pushHseaders);
         $request = new Request($this->http2Connect, $this->http2Connect, $headers);
-        $this->streams[$id] = new Http2Stream($this, $streamId, 0, $this->initialWindowSize, Http2Stream::RESERVED | Http2Stream::REMOTE_CLOSED);
-        $this->streamIdMap[$id] = $request;
+        $this->streams[$id] = new Http2Stream( 0, $this->initialWindowSize, Http2Stream::RESERVED | Http2Stream::REMOTE_CLOSED);
+        $this->streamIdRequestMap[$id] = $request;
         foreach ($pushHseaders as $k => $v) {
             if (is_scalar($v)) $pushHseaders[$k] = [$v];
         }
@@ -300,7 +303,7 @@ final class Http2Driver
     public function writeData(string $data, int $id)
     {
         if (!isset($this->streams[$id])) {
-            // "The stream was closed"
+            var_dump("The stream was closed");
             return;
         }
         $this->streams[$id]->buffer .= $data;
@@ -458,7 +461,7 @@ final class Http2Driver
             if (!($streamId & 1) || $this->remainingStreams-- <= 0 || $streamId <= $this->remoteStreamId) {
                 throw new Http2ConnectionException("Invalid stream ID $streamId", Http2Parser::PROTOCOL_ERROR);
             }
-            $stream = $this->streams[$streamId] = new Http2Stream($this, $streamId, Options::getBodySizeLimit(), $this->initialWindowSize);
+            $stream = $this->streams[$streamId] = new Http2Stream( Options::getBodySizeLimit(), $this->initialWindowSize);
         }
         $this->remoteStreamId = \max($streamId, $this->remoteStreamId);
         $this->http2Connect->updateExpirationTime(\time() + Options::getHttp2Timeout());
@@ -494,7 +497,7 @@ final class Http2Driver
         $this->pinged = 0;
         if ($ended) {  //如果是结束流表示没有请求体
             $request = new Request($streamId, $this->http2Connect, $headers);
-            $this->streamIdMap[$streamId] = $request;
+            $this->streamIdRequestMap[$streamId] = $request;
             return;
         }
         $maxBodySize = Options::getBodySizeLimit();
@@ -514,7 +517,7 @@ final class Http2Driver
             $stream->expectedLength = (int)$contentLength;
         }
         $request = new Request($streamId, $this->http2Connect, $headers);
-        $this->streamIdMap[$streamId] = $request;
+        $this->streamIdRequestMap[$streamId] = $request;
         // 如果是客户端流模式，这里应该给前端返回头响应
         if (in_array($request->path(), $this->clientStreamUrl)) {
             if (is_callable($this->onRequest)) {
@@ -522,6 +525,9 @@ final class Http2Driver
             } else {
                 $response = new Response(200, ['content-type' => 'text/html'], "");
             }
+            $response->http2Driver = $this;
+            $response->streamId = $streamId;
+            $this->streamIdResponseMap[$streamId] = $response;
             $this->sendHeader($streamId, $response, $request);
         }
     }
@@ -555,12 +561,13 @@ final class Http2Driver
             $stream->expectedLength -= $length;
         }
         /** @var Request $request */
-        $request = $this->streamIdMap[$streamId];;
+        $request = $this->streamIdRequestMap[$streamId];;
         if (in_array($request->path(), $this->clientStreamUrl)) {
             // 客户端流模式在此处不停的发送帧  需要先把头信息发送回去再发送data帧
             // $this->streams[$streamId]
             if (is_callable($this->onStreamData)) {
-                if (($this->onStreamData)($request, $this->streams[$streamId], $data) === false) {
+                if (($this->onStreamData)($request, $this->streamIdResponseMap[$streamId], $data) === false) {
+                    //if (($this->onStreamData)($request, $this->streams[$streamId], $data) === false) {
                     //如果服务端模式。服务端准备关闭流，就假设这是最后一个流
                     $this->handleStreamEnd($streamId);
                 }
@@ -592,12 +599,15 @@ final class Http2Driver
             throw new Http2StreamException("Body length does not match content-length header", $streamId, Http2Parser::PROTOCOL_ERROR);
         }
         /** @var Request $request */
-        $request = $this->streamIdMap[$streamId];
+        $request = $this->streamIdRequestMap[$streamId];
         if (!in_array($request->getMethod(), Options::getAllowedMethods())) {
             $response = new Response(405); //METHOD_NOT_ALLOWED
         } else {
-            if (is_callable($this->onRequest)) {
-                $response = ($this->onRequest)($request);
+            $response = $this->streamIdResponseMap[$streamId];
+            if (!$response instanceof Response) {
+                if (is_callable($this->onRequest)) {
+                    $response = ($this->onRequest)($request);
+                }
             }
             if (!$response instanceof Response) {
                 $response = new Response(404, ['content-type' => 'text/html'], "");
@@ -639,7 +649,7 @@ final class Http2Driver
             if ($streamId <= $this->remoteStreamId) {//此帧可能在处理完成或帧发送完成后到达，这会导致它对已识别的流没有任何影响
                 return;
             }
-            $this->streams[$streamId] = new Http2Stream($this, $streamId, Options::getBodySizeLimit(), $this->initialWindowSize);
+            $this->streams[$streamId] = new Http2Stream( Options::getBodySizeLimit(), $this->initialWindowSize);
         }
         $stream = $this->streams[$streamId];
         $stream->dependency = $parentId;
@@ -748,11 +758,11 @@ final class Http2Driver
         $header["uri"] = $request->uri();
         $header["queryString"] = $request->queryString();
         $header["path"] = $request->path();
-        $this->streams[1] = new Http2Stream($this, 1,
+        $this->streams[1] = new Http2Stream(
             0, $this->initialWindowSize,
             Http2Stream::RESERVED | Http2Stream::REMOTE_CLOSED
         );
-        $this->streamIdMap[1] = new Request(1, $http2Connect, $header, $request->rawBody());
+        $this->streamIdRequestMap[1] = new Request(1, $http2Connect, $header, $request->rawBody());
         $this->remainingStreams--;
         $this->handleStreamEnd(1);
     }

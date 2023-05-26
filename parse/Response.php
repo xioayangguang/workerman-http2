@@ -136,7 +136,7 @@ class Response
 
     public function setTrailers(array $trailers)
     {
-        $this->_trailers = $trailers;
+        $this->_trailers = array_merge($this->_trailers, $trailers);
     }
 
 

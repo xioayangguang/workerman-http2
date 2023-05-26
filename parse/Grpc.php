@@ -78,7 +78,7 @@ class Grpc extends Http2
     }
 
 
-    public static function onStreamData(Request $request, Http2Stream $stream, string $data)
+    public static function onStreamData(Request $request, Response $response, string $data)
     {
         $data = self::unpack($data);
         if (!empty($data)) {
@@ -90,7 +90,7 @@ class Grpc extends Http2
                 if (in_array($request->path(), self::$streaming["client_streaming"])) {
                     if (!empty($response_message)) {
                         $data = $response_message->serializeToString();
-                        $stream->sendStream(self::pack($data));
+                        $response->tuckData(self::pack($data));
                         return false;
                     }
                 }
@@ -99,7 +99,7 @@ class Grpc extends Http2
                     if ($generator instanceof Iterator) {
                         foreach ($generator as $response_message) {
                             $data = $response_message->serializeToString();
-                            $stream->sendStream(self::pack($data));   //在响应流前追加数据
+                            $response->tuckData(self::pack($data));   //在响应流前追加数据
                         }
                     } else {//终止流
                         return false;
@@ -109,16 +109,18 @@ class Grpc extends Http2
                     }
                 }
             } else {//这里不传入end  如果是结束直接传Response对象
-                $stream->sendStream(self::pack("404"));
+                $response->tuckData(self::pack("404"));
+                $response->setTrailers(["grpc-status" => 5]);
                 return false;
             }
         }
     }
 
 
+    //只应该再简单模式下生效
     public static function onRequest(Request $request)
     {
-        if (in_array($request->path(), self::$streaming["simple"])) {//普通模式
+        if (in_array($request->path(), self::$streaming["simple"])) { //普通模式
             $data = self::unpack($request->rawBody());
             if (!empty($data)) {
                 if (is_callable(self::$route[$request->path()])) {
@@ -137,7 +139,6 @@ class Grpc extends Http2
                 }
             }
         } else { //先返回响应普通头
-            //最后都会多一个空消息
             $response = new Response(200, ['content-type' => 'application/grpc'], self::pack("")); //默认响应成功
             $response->setTrailers(["grpc-status" => "0", "grpc-message" => ""]);
             return $response;
@@ -148,17 +149,22 @@ class Grpc extends Http2
     public static function onWriteBody(Request $request, Response $response)
     {
         if (in_array($request->path(), self::$streaming["server_streaming"])) {
-            if (is_callable(self::$route[$request->path()])) {
-                $obj = new self::$parameter[$request->path()];
-                $obj->metadata = $request->header();
-                $obj->mergeFromString(self::unpack($request->rawBody()));
-                $generator = (self::$route[$request->path()])($obj);
-                if ($generator instanceof Iterator) {
-                    foreach ($generator as $response_message) {
-                        $data = $response_message->serializeToString();
-                        $response->tuckData(self::pack($data));   //在响应流前追加数据
+            try {
+                if (is_callable(self::$route[$request->path()])) {
+                    $obj = new self::$parameter[$request->path()];
+                    $obj->metadata = $request->header();
+                    $obj->mergeFromString(self::unpack($request->rawBody()));
+                    $generator = (self::$route[$request->path()])($obj);
+                    if ($generator instanceof Iterator) {
+                        foreach ($generator as $response_message) {
+                            $data = $response_message->serializeToString();
+                            $response->tuckData(self::pack($data));   //在响应流前追加数据
+                        }
                     }
                 }
+            } catch (\Exception $exception) {
+                $response->tuckData(self::pack(""));
+                $response->setTrailers(["grpc-status" => "14", "grpc-message" => $exception->getMessage()]);
             }
         }
     }
@@ -179,7 +185,7 @@ class Grpc extends Http2
      * 扫描文件
      * @throws \Exception
      */
-    public static function loadHook()
+    private static function loadHook()
     {
         $base_path = realpath(__DIR__ . '/../');
         $path = $base_path . '/' . self::$protocPath . '/';
